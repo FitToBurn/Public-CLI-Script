@@ -24,6 +24,19 @@ enter_promote(){
 
 initialize(){
     [[ $EUID -ne 0 ]] && echo -e "[${red}Error${plain}] This script must be run as root!" && exit 1
+    #开启BBR加速
+    BBRCHECK = $(sysctl -n net.ipv4.tcp_congestion_control)
+    if [ "$BBRCHECK" != "bbr" ]; then
+        echo "net.core.default_qdisc=fq" >> /etc/sysctl.conf
+        echo "net.ipv4.tcp_congestion_control=bbr" >> /etc/sysctl.conf
+        sysctl -p
+        sysctl -n net.ipv4.tcp_congestion_control
+        lsmod | grep bbr
+        green "BBR enabled."
+    else
+        yellow "BBR is already enabled."
+    fi
+
     #关闭防火墙和SELINUX
     systemctl stop firewalld
     systemctl disable firewalld
@@ -38,23 +51,11 @@ initialize(){
     fi
     yum -y install bind-utils wget unzip zip curl tar
 
-    #开启BBR加速
-    BBRCHECK = $(sysctl -n net.ipv4.tcp_congestion_control)
-    if [ "$BBRCHECK" != "bbr" ]; then
-        echo "net.core.default_qdisc=fq" >> /etc/sysctl.conf
-        echo "net.ipv4.tcp_congestion_control=bbr" >> /etc/sysctl.conf
-        sysctl -p
-        sysctl -n net.ipv4.tcp_congestion_control
-        lsmod | grep bbr
-        green "BBR enabled."
-    else
-        yellow "BBR is already enabled."
-    fi
 }
 
 cert(){
     green "==================================="
-    yellow "Enter the domain name of your VPS:"
+    yteal "" "Enter the domain name of your VPS:"
     green "==================================="
     read your_domain
     real_addr=`ping ${your_domain} -c 1 | sed '1{s/[^(]*(//;s/).*//;q}'`
@@ -187,7 +188,7 @@ EOF
     docker volume create snell_config
     cat > /var/lib/docker/volumes/snell_config/snell-server.conf <<-EOF
 [snell-server]
-interface = 0.0.0.0:$snellport
+listen = 0.0.0.0:$snellport
 psk = $mainpasswd
 obfs = off
 EOF
@@ -284,12 +285,12 @@ start_menu(){
     clear
     if [ "$1" == "1" ];then
         green "================================================"
-        green "SSL Certificate has been successfully installed."
+        yteal "" "SSL Certificate has been successfully installed."
         green "================================================"
     elif [ "$1" == "2" ];then
         green "============================================"
-        green "Successfully installed Docker."
-        yteal "VPS IPv4:" "${`curl ipv4.icanhazip.com`}"
+        yteal "" "Successfully installed Docker."
+        yteal "VPS IPv4:" "${curl ipv4.icanhazip.com}"
         yteal "Protocol password:" $mainpasswd
         yteal "Trojan listen port:" "443"
         yteal "Shadowsocks listen port:" $ssport
@@ -298,7 +299,7 @@ start_menu(){
         green "============================================"
     elif [ "$1" == "3" ];then
         green "====================================================="
-        green "VPS security settings have been successfully updated."
+        yteal "" "VPS security settings have been successfully updated."
         yellow "Root login has been disabled."
         yteal "SSH port has changed to:" $sshport
         yteal "Username of admin account:" $newusername
