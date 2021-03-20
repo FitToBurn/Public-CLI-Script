@@ -414,7 +414,7 @@ fi
 
 if [ "$mainpasswd" != "NULL" ] && [ "$fallbackport" != "NULL" ] && [ "$ssport" != "NULL" ] && [ "$snellport" != "NULL" ] && [ "$sshport" != "NULL" ] && [ "$newusername" != "NULL" ] && [ "$adminpasswd" != "NULL" ];then
     clear
-    green "=============================================="
+    green "============================================================"
     yellow " Please confirm your VPS configuration:"
     yteal " VPS IPv4:" $(curl -s ipv4.icanhazip.com)
     yteal " Protocol password:" $mainpasswd
@@ -426,7 +426,7 @@ if [ "$mainpasswd" != "NULL" ] && [ "$fallbackport" != "NULL" ] && [ "$ssport" !
     yteal " SSH port will be changed to:" $sshport
     yteal " Username of admin account:" $newusername
     yteal " Password of admin account:" $adminpasswd
-    green "=============================================="
+    green "============================================================"
     echo
     enter_promote " Confirm(y/n):"
     read confirmation
@@ -439,7 +439,7 @@ if [ "$mainpasswd" != "NULL" ] && [ "$fallbackport" != "NULL" ] && [ "$ssport" !
             install_docker
             ssh_update
             clear
-            green "=============================================="
+            green "============================================================"
             green " Installation complete."
             yellow " Root login has been disabled."
             yteal " Protocol password:" $mainpasswd
@@ -451,7 +451,7 @@ if [ "$mainpasswd" != "NULL" ] && [ "$fallbackport" != "NULL" ] && [ "$ssport" !
             yteal " SSH port has been changed to:" $sshport
             yteal " Username of admin account:" $newusername
             yteal " Password of admin account:" $adminpasswd
-            green "=============================================="
+            green "============================================================"
         else
             exit 0
         fi
