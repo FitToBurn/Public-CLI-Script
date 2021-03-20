@@ -8,11 +8,14 @@ red(){
 yellow(){
     echo -e "\033[33m\033[01m$1\033[0m"
 }
-yellowS(){
+yteal(){
     echo -ne "\033[33m\033[01m$1\033[0m "
+    echo -e "\033[36m\033[01m$2\033[0m"
 }
-teal(){
-    echo -e "\033[36m\033[01m$1\033[0m"
+
+bteal(){
+    echo -ne "\033[34m\033[01m$1\033[0m "
+    echo -e "\033[36m\033[01m$2\033[0m"
 }
 
 enter_promote(){
@@ -50,9 +53,9 @@ initialize(){
 }
 
 cert(){
-    green "=================================="
-    yellow "Enter the domain name of you VPS:"
-    green "=================================="
+    green "==================================="
+    yellow "Enter the domain name of your VPS:"
+    green "==================================="
     read your_domain
     real_addr=`ping ${your_domain} -c 1 | sed '1{s/[^(]*(//;s/).*//;q}'`
     local_addr=`curl ipv4.icanhazip.com`
@@ -78,13 +81,8 @@ cert(){
             --fullchain-file /usr/src/cert/fullchain.cer \
             --reloadcmd  "systemctl force-reload  nginx.service"
         if test -s /usr/src/cert/fullchain.cer; then
-            green "================================================"
-            green "SSL Certificate has been Successfully installed."
-            yellow "Initializing docker installation..."
-            green "================================================"
-            #外加个变量 这样可以print
-            start_menu
-            install_docker
+            #重启docker
+            start_menu 1
         else
             red "=================================="
             red "Failed to install SSL Certificate."
@@ -106,24 +104,21 @@ protocol_config(){
     green "======================================================"
     echo
     yellow "Enter the PASSWORD for Trojan, Shadowsocks and Snell:"
-    yellowS "Default:"
-    teal "${randompasswd}"
+    yteal "Default:" "${randompasswd}"
     enter_promote "Please enter:"
     read mainpasswd
     [ -z "${mainpasswd}" ] && mainpasswd=${randompasswd}
     echo
 
     yellow "Enter the port for Shadowsocks [1-65535]:"
-    yellowS "Default:"
-    teal "${randomssport}"
+    yteal "Default:" "${randomssport}"
     enter_promote "Please enter:"
     read ssport
     [ -z "${ssport}" ] && ssport=${randomssport}
     echo
 
     yellow "Enter the port for Snell [1-65535]:"
-    yellowS "Default:"
-    teal "${randomsnellport}"
+    yteal "Default:" "${randomsnellport}"
     enter_promote "Please enter:"
     read snellport
     [ -z "${snellport}" ] && snellport=${randomsnellport}
@@ -191,12 +186,13 @@ EOF
     docker pull primovist/snell-docker
     docker volume create snell_config
     cat > /var/lib/docker/volumes/snell_config/snell-server.conf <<-EOF
-[Snell Server]
+[snell-server]
 interface = 0.0.0.0:$snellport
 psk = $mainpasswd
 obfs = off
 EOF
     docker run -d --network=host --name=snell --restart=always -v /var/lib/docker/volumes/snell_config/:/etc/snell/ primovist/snell-docker
+    start_menu 2
 }
 
 ssh_update_config(){
@@ -207,24 +203,21 @@ ssh_update_config(){
     green "==========================================="
     echo
     yellow "Enter a new SSH port [1-65535]:"
-    yellowS "Default:"
-    teal "${randomsshport}"
+    yteal "Default:" "${randomsshport}"
     enter_promote "Please enter:"
     read sshport
     [ -z "${sshport}" ] && sshport=${randomsshport}
     echo
 
     yellow "Enter a USERNAME for new admin account:"
-    yellowS "Default:"
-    teal "TempAdmin"
+    yteal "Default:" "TempAdmin"
     enter_promote "Please enter:"
     read newusername
     [ -z "${newusername}" ] && newusername="TempAdmin"
     echo
 
     yellow "Enter a PASSWORD for ${newusername}:"
-    yellowS "Default:"
-    teal "${randomsshpasswd}"
+    yteal "Default:" "${randomsshpasswd}"
     enter_promote "Please enter:"
     read sshpasswd
     [ -z "${sshpasswd}" ] && sshpasswd=${randomsshpasswd}
@@ -284,17 +277,42 @@ EOF
   semanage port -a -t ssh_port_t -p tcp ${sshport}
   semanage port -l | grep ssh
   systemctl restart sshd
-
+  start_menu 3
 }
 
 start_menu(){
     clear
-    green " ===================================="
-    green " ===================================="
+    if ["$1" == "1"];then
+        green "================================================"
+        green "SSL Certificate has been successfully installed."
+        green "================================================"
+    else if ["$1" == "2"]
+        green "============================================"
+        green "Successfully installed Docker."
+        bteal "VPS IPv4:" "${`curl ipv4.icanhazip.com`}"
+        bteal "Protocol password:" $mainpasswd
+        bteal "Trojan listen port:" "443"
+        bteal "Shadowsocks listen port:" $ssport
+        bteal "Shadowsocks encryption:" "chacha20-ietf-1305"
+        bteal "Snell listen port:" $snellport
+        green "============================================"
+    else if ["$1" == "3"]
+        green "====================================================="
+        green "VPS security settings have been successfully updated."
+        yellow "Root login has been disabled."
+        bteal "SSH port has changed to:" $sshport
+        bteal "Username of admin account:" $newusername
+        bteal "Password of admin account:" $sshpasswd
+        green "====================================================="
+    else
+        green " ===================================="
+        green " ===================================="
+    fi
     echo
     green " 1. Install/Renew SSL Certificate"
-    red " 2. VPS Security Update"
-    yellow " 0. Exit Script"
+    green " 2. Install Docker"
+    yellow " 3. VPS Security Update"
+    red " 0. Exit Script"
     echo
     enter_promote "Enter a number:"
     read num
@@ -304,6 +322,9 @@ start_menu(){
     cert
     ;;
     2)
+    install_docker
+    ;;
+    3)
     ssh_update
     ;;
     0)
