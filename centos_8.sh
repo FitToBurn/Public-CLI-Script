@@ -9,23 +9,17 @@ yellow(){
     echo -e "\033[33m\033[01m$1\033[0m"
 }
 yteal(){
-    echo -ne "\033[33m\033[01m$1\033[0m "
+    echo -ne "\033[32m\033[01m$1\033[0m"
     echo -e "\033[36m\033[01m$2\033[0m"
 }
-
-yteal(){
-    echo -ne "\033[32m\033[01m$1\033[0m "
-    echo -e "\033[36m\033[01m$2\033[0m"
-}
-
 enter_promote(){
-    echo -ne "\033[44;37m$1\033[0m "
+    echo -ne "\033[44m\033[01m$1\033[0m"
 }
 
 initialize(){
     [[ $EUID -ne 0 ]] && echo -e "[${red}Error${plain}] This script must be run as root!" && exit 1
     #开启BBR加速
-    BBRCHECK = $(sysctl -n net.ipv4.tcp_congestion_control)
+    BBRCHECK=$(sysctl -n net.ipv4.tcp_congestion_control)
     if [ "$BBRCHECK" != "bbr" ]; then
         echo "net.core.default_qdisc=fq" >> /etc/sysctl.conf
         echo "net.ipv4.tcp_congestion_control=bbr" >> /etc/sysctl.conf
