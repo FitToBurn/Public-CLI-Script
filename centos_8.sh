@@ -48,10 +48,13 @@ initialize(){
 }
 
 cert(){
-    green "==================================="
-    yteal "" "Enter the domain name of your VPS:"
-    green "==================================="
+    green "====================================="
+    echo
+    yteal "" " Enter the domain name of your VPS:"
+    enter_promote " Domain:"
     read your_domain
+    echo
+    green "====================================="
     real_addr=`ping ${your_domain} -c 1 | sed '1{s/[^(]*(//;s/).*//;q}'`
     local_addr=`curl ipv4.icanhazip.com`
     if [ $real_addr == $local_addr ] ; then
@@ -105,6 +108,13 @@ protocol_config(){
     [ -z "${mainpasswd}" ] && mainpasswd=${randompasswd}
     echo
 
+    yellow " Enter the fallback port for Trojan [1-65535]:"
+    yteal " ==Default==:" "80"
+    enter_promote " Your choice:"
+    read fallbackport
+    [ -z "${fallbackport}" ] && fallbackport="80"
+    echo
+
     yellow " Enter the port for Shadowsocks [1-65535]:"
     yteal " ==Default==:" "${randomssport}"
     enter_promote " Your choice:"
@@ -130,9 +140,13 @@ install_docker(){
     systemctl start docker
     systemctl enable docker
     systemctl enable containerd
+
+    #portainer
     docker pull portainer/portainer:latest
     docker volume create portainer_data
     docker run -d -p 9000:9000 --name=portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainer/portainer
+    
+    #v2fly
     docker pull v2fly/v2fly-core
     docker volume create v2fly_config
 	  cat > /var/lib/docker/volumes/v2fly_config/config.json <<-EOF
@@ -147,7 +161,7 @@ install_docker(){
       "protocol": "trojan",
       "settings": {
         "clients":[{"password": "$mainpasswd"}],
-        "fallbacks": [{"dest": 9000}]
+        "fallbacks": [{"dest": $fallbackport}]
       },
       "streamSettings": {
         "network": "tcp",
@@ -178,6 +192,8 @@ install_docker(){
 }
 EOF
     docker run -d --network=host --name=v2fly --restart=always -v /var/lib/docker/volumes/v2fly_config/config.json:/etc/v2ray/config.json -v /usr/src/cert:/cert v2fly/v2fly-core
+    
+    #snell
     docker pull primovist/snell-docker
     docker volume create snell_config
     cat > /var/lib/docker/volumes/snell_config/snell-server.conf <<-EOF
@@ -187,6 +203,7 @@ psk = $mainpasswd
 obfs = off
 EOF
     docker run -d --network=host --name=snell --restart=always -v /var/lib/docker/volumes/snell_config/:/etc/snell/ primovist/snell-docker
+    
     start_menu 2
 }
 
