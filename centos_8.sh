@@ -434,8 +434,8 @@ if [ "$mainpasswd" != "NULL" ] && [ "$fallbackport" != "NULL" ] && [ "$ssport" !
         mode=1
         echo
         initialize
-        exitstate=cert
-        if [ "$exitstate" != "1" ];then
+        cert
+        if [ "$?" != "1" ];then
             install_docker
             ssh_update
             clear
