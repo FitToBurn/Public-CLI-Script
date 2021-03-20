@@ -195,7 +195,7 @@ ssh_update_config(){
     randomsshport=$(shuf -i 20000-29999 -n 1)
     randomsshpasswd=$(cat /dev/urandom | head -1 | md5sum | head -c 16)
 
-    green "============================================"
+    green "============================================="
     echo
     yellow " Enter a new SSH port [1-65535]:"
     yteal " Default:" "${randomsshport}"
@@ -217,7 +217,7 @@ ssh_update_config(){
     read sshpasswd
     [ -z "${sshpasswd}" ] && sshpasswd=${randomsshpasswd}
     echo
-    green "============================================"
+    green "============================================="
     echo
 
 }
