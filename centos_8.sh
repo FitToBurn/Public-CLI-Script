@@ -364,7 +364,7 @@ sshport="NULL"
 newusername="NULL"
 adminpasswd="NULL"
 
-if [ $#!=1 ];then
+if [ $# -ne 1 ];then
     TEMP=`getopt -l protocol-passwd:,fallback-port:,ss-port:,snell-port:,ssh-port:,new-username:,admin-passwd: -- "$@"`
     eval set -- $TEMP
     while true ; do
