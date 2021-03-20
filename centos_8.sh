@@ -17,7 +17,7 @@ enter_promote(){
 }
 
 initialize(){
-    [[ $EUID -ne 0 ]] && echo -e "[${red}Error${plain}] This script must be run as root!" && exit 1
+    
     #开启BBR加速
     BBRCHECK=$(sysctl -n net.ipv4.tcp_congestion_control)
     if [ "$BBRCHECK" != "bbr" ]; then
@@ -134,7 +134,6 @@ protocol_config(){
 }
 
 install_docker(){
-    protocol_config
     curl -fsSL https://get.docker.com -o get-docker.sh
     sh get-docker.sh
     systemctl start docker
@@ -210,7 +209,7 @@ EOF
 ssh_update_config(){
 
     randomsshport=$(shuf -i 20000-29999 -n 1)
-    randomsshpasswd=$(cat /dev/urandom | head -1 | md5sum | head -c 16)
+    randomadminpasswd=$(cat /dev/urandom | head -1 | md5sum | head -c 16)
 
     green "============================================="
     echo
@@ -229,10 +228,10 @@ ssh_update_config(){
     echo
 
     yellow " Enter a PASSWORD for ${newusername}:"
-    yteal " ==Default==:" "${randomsshpasswd}"
+    yteal " ==Default==:" "${randomadminpasswd}"
     enter_promote " Your choice:"
-    read sshpasswd
-    [ -z "${sshpasswd}" ] && sshpasswd=${randomsshpasswd}
+    read adminpasswd
+    [ -z "${adminpasswd}" ] && adminpasswd=${randomadminpasswd}
     echo
     green "============================================="
     echo
@@ -240,9 +239,8 @@ ssh_update_config(){
 }
 
 ssh_update(){
-  ssh_update_config
   adduser ${newusername}
-  echo ${sshpasswd} | passwd ${newusername} --stdin
+  echo ${adminpasswd} | passwd ${newusername} --stdin
   chmod 777 /etc/sudoers
   cat > /etc/sudoers <<-EOF
 Defaults   !visiblepw
@@ -304,6 +302,7 @@ start_menu(){
         yteal " VPS IPv4:" $(curl -s ipv4.icanhazip.com)
         yteal " Protocol password:" $mainpasswd
         yteal " Trojan listen port:" "443"
+        yteal " Trojan fallback port:" $fallbackport
         yteal " Shadowsocks listen port:" $ssport
         yteal " Shadowsocks encryption:" "chacha20-ietf-1305"
         yteal " Snell listen port:" $snellport
@@ -314,7 +313,7 @@ start_menu(){
         yellow " Root login has been disabled."
         yteal " SSH port has changed to:" $sshport
         yteal " Username of admin account:" $newusername
-        yteal " Password of admin account:" $sshpasswd
+        yteal " Password of admin account:" $adminpasswd
         green "======================================================="
     else
         green "========================================="
@@ -336,9 +335,11 @@ start_menu(){
     cert
     ;;
     2)
+    protocol_config
     install_docker
     ;;
     3)
+    ssh_update_config
     ssh_update
     ;;
     0)
@@ -346,12 +347,97 @@ start_menu(){
     ;;
     *)
     clear
-    red "Please enter a correct number"
+    red "[Error] Please enter a valid number"
     sleep 1s
     start_menu
     ;;
     esac
 }
 
-initialize
-start_menu
+[[ $EUID -ne 0 ]] && red "[Error] This script must be run as root!" && exit 1
+
+mainpasswd="NULL"
+fallbackport="NULL"
+ssport="NULL"
+snellport="NULL"
+sshport="NULL"
+newusername="NULL"
+adminpasswd="NULL"
+
+TEMP=`getopt -l protocol-passwd:,fallback-port:,ss-port:,snell-port:,ssh-port:,new-username:,admin-passwd: -- "$@"`
+eval set -- $TEMP
+while true ; do
+        case "$1" in
+                --protocol-passwd) 
+                    mainpasswd=$2;
+                    shift 2;;
+	            --fallback-port) 
+                    fallbackport=;
+                    shift 2;;
+	            --ss-port) 
+                    ssport=$2;
+                    shift 2;;
+                --snell-port) 
+                    snellport=$2;
+                    shift 2;;
+                --ssh-port) 
+                    sshport=$2;
+                    shift 2;;
+                --new-username) 
+                    newusername=$2;
+                    shift 2;;
+                --admin-passwd) 
+                    adminpasswd=$2;
+                    shift 2;;
+                --) 
+                    shift ; 
+                    break ;;
+	            *) 
+                    red "Invalid option.";
+                    exit 1;;
+        esac
+done
+
+if [ mainpasswd!="NULL" ] && [ fallbackport!="NULL" ] && [ ssport!="NULL" ] && [ snellport!="NULL" ] && [ sshport!="NULL" ] && [ newusername!="NULL" ] && [ adminpasswd!="NULL" ];then
+    clear
+    green "=============================================="
+    yellow " Please confirm your VSP configuration:"
+    yteal " VPS IPv4:" $(curl -s ipv4.icanhazip.com)
+    yteal " Protocol password:" $mainpasswd
+    yteal " Trojan listen port:" "443"
+    yteal " Trojan fallback port:" $fallbackport
+    yteal " Shadowsocks listen port:" $ssport
+    yteal " Shadowsocks encryption:" "chacha20-ietf-1305"
+    yteal " Snell listen port:" $snellport
+    yteal " SSH port will be changed to:" $sshport
+    yteal " Username of admin account:" $newusername
+    yteal " Password of admin account:" $adminpasswd
+    green "=============================================="
+    echo
+    enter_promote " Confirm(y/n):"
+    read confirmation
+    echo
+    if [ "$confirmation"=="y" ] || [ "$confirmation"=="Y" ];then
+        initialize
+        cert
+        install_docker
+        ssh_update
+        clear
+        green "=============================================="
+        green " Installation complete."
+        yellow " Root login has been disabled."
+        yteal " Protocol password:" $mainpasswd
+        yteal " Trojan listen port:" "443"
+        yteal " Trojan fallback port:" $fallbackport
+        yteal " Shadowsocks listen port:" $ssport
+        yteal " Shadowsocks encryption:" "chacha20-ietf-1305"
+        yteal " Snell listen port:" $snellport
+        yteal " SSH port has been changed to:" $sshport
+        yteal " Username of admin account:" $newusername
+        yteal " Password of admin account:" $adminpasswd
+        green "=============================================="
+    fi
+else
+    initialize
+    start_menu
+fi
