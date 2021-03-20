@@ -9,7 +9,7 @@ yellow(){
     echo -e "\033[33m\033[01m$1\033[0m"
 }
 yteal(){
-    echo -ne "\033[32m\033[01m$1\033[0m"
+    echo -ne "\033[34m\033[01m$1\033[0m"
     echo -e "\033[36m\033[01m$2\033[0m"
 }
 enter_promote(){
@@ -96,29 +96,29 @@ protocol_config(){
     randomssport=$(shuf -i 10000-14999 -n 1)
     randomsnellport=$(shuf -i 15000-19999 -n 1)
 
-    green "======================================================"
+    green "========================================================"
     echo
-    yellow "Enter the PASSWORD for Trojan, Shadowsocks and Snell:"
-    yteal "Default:" "${randompasswd}"
-    enter_promote "Please enter:"
+    yellow " Enter the PASSWORD for Trojan, Shadowsocks and Snell:"
+    yteal " Default:" "${randompasswd}"
+    enter_promote " Please enter:"
     read mainpasswd
     [ -z "${mainpasswd}" ] && mainpasswd=${randompasswd}
     echo
 
-    yellow "Enter the port for Shadowsocks [1-65535]:"
-    yteal "Default:" "${randomssport}"
-    enter_promote "Please enter:"
+    yellow " Enter the port for Shadowsocks [1-65535]:"
+    yteal " Default:" "${randomssport}"
+    enter_promote " Please enter:"
     read ssport
     [ -z "${ssport}" ] && ssport=${randomssport}
     echo
 
-    yellow "Enter the port for Snell [1-65535]:"
-    yteal "Default:" "${randomsnellport}"
-    enter_promote "Please enter:"
+    yellow " Enter the port for Snell [1-65535]:"
+    yteal " Default:" "${randomsnellport}"
+    enter_promote " Please enter:"
     read snellport
     [ -z "${snellport}" ] && snellport=${randomsnellport}
     echo
-    green "======================================================"
+    green "========================================================"
     echo
 
 }
@@ -195,29 +195,29 @@ ssh_update_config(){
     randomsshport=$(shuf -i 20000-29999 -n 1)
     randomsshpasswd=$(cat /dev/urandom | head -1 | md5sum | head -c 16)
 
-    green "==========================================="
+    green "============================================"
     echo
-    yellow "Enter a new SSH port [1-65535]:"
-    yteal "Default:" "${randomsshport}"
-    enter_promote "Please enter:"
+    yellow " Enter a new SSH port [1-65535]:"
+    yteal " Default:" "${randomsshport}"
+    enter_promote " Please enter:"
     read sshport
     [ -z "${sshport}" ] && sshport=${randomsshport}
     echo
 
-    yellow "Enter a USERNAME for new admin account:"
-    yteal "Default:" "TempAdmin"
-    enter_promote "Please enter:"
+    yellow " Enter a USERNAME for new admin account:"
+    yteal " Default:" "TempAdmin"
+    enter_promote " Please enter:"
     read newusername
     [ -z "${newusername}" ] && newusername="TempAdmin"
     echo
 
-    yellow "Enter a PASSWORD for ${newusername}:"
-    yteal "Default:" "${randomsshpasswd}"
-    enter_promote "Please enter:"
+    yellow " Enter a PASSWORD for ${newusername}:"
+    yteal " Default:" "${randomsshpasswd}"
+    enter_promote " Please enter:"
     read sshpasswd
     [ -z "${sshpasswd}" ] && sshpasswd=${randomsshpasswd}
     echo
-    green "==========================================="
+    green "============================================"
     echo
 
 }
@@ -278,34 +278,34 @@ EOF
 start_menu(){
     clear
     if [ "$1" == "1" ];then
-        green "================================================"
-        yteal "" "SSL Certificate has been successfully installed."
-        green "================================================"
+        green "=================================================="
+        yteal " " "SSL Certificate has been successfully installed."
+        green "=================================================="
     elif [ "$1" == "2" ];then
-        green "============================================"
-        yteal "" "Successfully installed Docker."
-        yteal "VPS IPv4:" "${curl ipv4.icanhazip.com}"
-        yteal "Protocol password:" $mainpasswd
-        yteal "Trojan listen port:" "443"
-        yteal "Shadowsocks listen port:" $ssport
-        yteal "Shadowsocks encryption:" "chacha20-ietf-1305"
-        yteal "Snell listen port:" $snellport
-        green "============================================"
+        green "=============================================="
+        yteal " " "Successfully installed Docker."
+        yteal " VPS IPv4:" $(curl ipv4.icanhazip.com)
+        yteal " Protocol password:" $mainpasswd
+        yteal " Trojan listen port:" "443"
+        yteal " Shadowsocks listen port:" $ssport
+        yteal " Shadowsocks encryption:" "chacha20-ietf-1305"
+        yteal " Snell listen port:" $snellport
+        green "=============================================="
     elif [ "$1" == "3" ];then
-        green "====================================================="
-        yteal "" "VPS security settings have been successfully updated."
-        yellow "Root login has been disabled."
-        yteal "SSH port has changed to:" $sshport
-        yteal "Username of admin account:" $newusername
-        yteal "Password of admin account:" $sshpasswd
-        green "====================================================="
+        green "======================================================="
+        yteal " " "VPS security settings have been successfully updated."
+        yellow " Root login has been disabled."
+        yteal " SSH port has changed to:" $sshport
+        yteal " Username of admin account:" $newusername
+        yteal " Password of admin account:" $sshpasswd
+        green "======================================================="
     else
         green "========================================="
         yteal "       System Requirement: " "CentOS8"
         green "========================================="
     fi
     echo
-    sleep 2s
+    sleep 1s
     green "  1. Install/Renew SSL Certificate"
     green "  2. Install Docker and Trojan/SS/Snell"
     yellow "  3. VPS Security Settings Update"
