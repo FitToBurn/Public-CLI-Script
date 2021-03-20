@@ -417,8 +417,8 @@ if [ "$mainpasswd" != "NULL" ] && [ "$fallbackport" != "NULL" ] && [ "$ssport" !
     echo
     enter_promote " Confirm(y/n):"
     read confirmation
-    echo
     if [ "$confirmation" == "y" ] || [ "$confirmation" == "Y" ];then
+        echo
         initialize
         cert
         install_docker
@@ -437,6 +437,9 @@ if [ "$mainpasswd" != "NULL" ] && [ "$fallbackport" != "NULL" ] && [ "$ssport" !
         yteal " Username of admin account:" $newusername
         yteal " Password of admin account:" $adminpasswd
         green "=============================================="
+    else
+        red " Exit"
+        exit 0
     fi
 else
     initialize
