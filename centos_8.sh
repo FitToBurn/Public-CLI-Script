@@ -321,7 +321,6 @@ start_menu(){
         green "========================================="
     fi
     echo
-    sleep 1s
     green "  1. Install/Renew SSL Certificate"
     green "  2. Install Docker and Trojan/SS/Snell"
     yellow "  3. VPS Security Settings Update"
@@ -365,7 +364,7 @@ newusername="NULL"
 adminpasswd="NULL"
 
 if [ $# -ne 0 ];then
-    TEMP=`getopt -l protocol-passwd:,fallback-port:,ss-port:,snell-port:,ssh-port:,new-username:,admin-passwd: -- "$@"`
+    TEMP=`getopt -o "" -l protocol-passwd:,fallback-port:,ss-port:,snell-port:,ssh-port:,new-username:,admin-passwd: -- "$@"`
     eval set -- $TEMP
     while true ; do
             case "$1" in
@@ -403,7 +402,7 @@ fi
 if [ "$mainpasswd" != "NULL" ] && [ "$fallbackport" != "NULL" ] && [ "$ssport" != "NULL" ] && [ "$snellport" != "NULL" ] && [ "$sshport" != "NULL" ] && [ "$newusername" != "NULL" ] && [ "$adminpasswd" != "NULL" ];then
     clear
     green "=============================================="
-    yellow " Please confirm your VSP configuration:"
+    yellow " Please confirm your VPS configuration:"
     yteal " VPS IPv4:" $(curl -s ipv4.icanhazip.com)
     yteal " Protocol password:" $mainpasswd
     yteal " Trojan listen port:" "443"
