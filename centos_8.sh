@@ -99,22 +99,22 @@ protocol_config(){
     green "========================================================"
     echo
     yellow " Enter the PASSWORD for Trojan, Shadowsocks and Snell:"
-    yteal " Default:" "${randompasswd}"
-    enter_promote " Please enter:"
+    yteal " ==Default==:" "${randompasswd}"
+    enter_promote " Your choice:"
     read mainpasswd
     [ -z "${mainpasswd}" ] && mainpasswd=${randompasswd}
     echo
 
     yellow " Enter the port for Shadowsocks [1-65535]:"
-    yteal " Default:" "${randomssport}"
-    enter_promote " Please enter:"
+    yteal " ==Default==:" "${randomssport}"
+    enter_promote " Your choice:"
     read ssport
     [ -z "${ssport}" ] && ssport=${randomssport}
     echo
 
     yellow " Enter the port for Snell [1-65535]:"
-    yteal " Default:" "${randomsnellport}"
-    enter_promote " Please enter:"
+    yteal " ==Default==:" "${randomsnellport}"
+    enter_promote " Your choice:"
     read snellport
     [ -z "${snellport}" ] && snellport=${randomsnellport}
     echo
@@ -198,22 +198,22 @@ ssh_update_config(){
     green "============================================="
     echo
     yellow " Enter a new SSH port [1-65535]:"
-    yteal " Default:" "${randomsshport}"
-    enter_promote " Please enter:"
+    yteal " ==Default==:" "${randomsshport}"
+    enter_promote " Your choice:"
     read sshport
     [ -z "${sshport}" ] && sshport=${randomsshport}
     echo
 
     yellow " Enter a USERNAME for new admin account:"
-    yteal " Default:" "TempAdmin"
-    enter_promote " Please enter:"
+    yteal " ==Default==:" "TempAdmin"
+    enter_promote " Your choice:"
     read newusername
     [ -z "${newusername}" ] && newusername="TempAdmin"
     echo
 
     yellow " Enter a PASSWORD for ${newusername}:"
-    yteal " Default:" "${randomsshpasswd}"
-    enter_promote " Please enter:"
+    yteal " ==Default==:" "${randomsshpasswd}"
+    enter_promote " Your choice:"
     read sshpasswd
     [ -z "${sshpasswd}" ] && sshpasswd=${randomsshpasswd}
     echo
@@ -284,7 +284,7 @@ start_menu(){
     elif [ "$1" == "2" ];then
         green "=============================================="
         yteal " " "Successfully installed Docker."
-        yteal " VPS IPv4:" $(curl ipv4.icanhazip.com)
+        yteal " VPS IPv4:" $(curl -s ipv4.icanhazip.com)
         yteal " Protocol password:" $mainpasswd
         yteal " Trojan listen port:" "443"
         yteal " Shadowsocks listen port:" $ssport
@@ -311,7 +311,7 @@ start_menu(){
     yellow "  3. VPS Security Settings Update"
     red "  0. Exit Script"
     echo
-    enter_promote "Enter a number:"
+    enter_promote " Enter a number:"
     read num
     echo
     case "$num" in
