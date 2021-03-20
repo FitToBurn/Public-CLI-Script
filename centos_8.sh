@@ -443,6 +443,7 @@ if [ "$mainpasswd" != "NULL" ] && [ "$fallbackport" != "NULL" ] && [ "$ssport" !
             green "=============================================="
         else
             exit 0
+        fi
     else
         red " Exit"
         echo
