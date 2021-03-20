@@ -80,7 +80,9 @@ cert(){
             --reloadcmd  "systemctl force-reload  nginx.service"
         if test -s /usr/src/cert/fullchain.cer; then
             #重启docker
-            start_menu 1
+            if [ "$mode" == "0" ];then
+                start_menu 1
+            fi
             return 0
         else
             red "=================================="
@@ -206,7 +208,10 @@ obfs = off
 EOF
     docker run -d --network=host --name=snell --restart=always -v /var/lib/docker/volumes/snell_config/:/etc/snell/ primovist/snell-docker
     
-    start_menu 2
+    if [ "$mode" == "0" ];then
+        start_menu 2        
+    fi
+    
 }
 
 ssh_update_config(){
@@ -290,7 +295,11 @@ EOF
   semanage port -a -t ssh_port_t -p tcp ${sshport}
   semanage port -l | grep ssh
   systemctl restart sshd
-  start_menu 3
+
+  if [ "$mode" == "0" ];then
+    start_menu 3          
+  fi
+  
 }
 
 start_menu(){
@@ -365,6 +374,7 @@ snellport="NULL"
 sshport="NULL"
 newusername="NULL"
 adminpasswd="NULL"
+mode=0
 
 if [ $# -ne 0 ];then
     TEMP=`getopt -o "" -l protocol-passwd:,fallback-port:,ss-port:,snell-port:,ssh-port:,new-username:,admin-passwd: -- "$@"`
@@ -421,6 +431,7 @@ if [ "$mainpasswd" != "NULL" ] && [ "$fallbackport" != "NULL" ] && [ "$ssport" !
     enter_promote " Confirm(y/n):"
     read confirmation
     if [ "$confirmation" == "y" ] || [ "$confirmation" == "Y" ];then
+        mode=1
         echo
         initialize
         exitstate=cert
