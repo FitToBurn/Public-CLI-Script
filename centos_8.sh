@@ -13,8 +13,8 @@ yteal(){
     echo -e "\033[36m\033[01m$2\033[0m"
 }
 
-bteal(){
-    echo -ne "\033[34m\033[01m$1\033[0m "
+yteal(){
+    echo -ne "\033[32m\033[01m$1\033[0m "
     echo -e "\033[36m\033[01m$2\033[0m"
 }
 
@@ -282,36 +282,38 @@ EOF
 
 start_menu(){
     clear
-    if ["$1" == "1"];then
+    if [ "$1" == "1" ];then
         green "================================================"
         green "SSL Certificate has been successfully installed."
         green "================================================"
-    elif ["$1" == "2"];then
+    elif [ "$1" == "2" ];then
         green "============================================"
         green "Successfully installed Docker."
-        bteal "VPS IPv4:" "${`curl ipv4.icanhazip.com`}"
-        bteal "Protocol password:" $mainpasswd
-        bteal "Trojan listen port:" "443"
-        bteal "Shadowsocks listen port:" $ssport
-        bteal "Shadowsocks encryption:" "chacha20-ietf-1305"
-        bteal "Snell listen port:" $snellport
+        yteal "VPS IPv4:" "${`curl ipv4.icanhazip.com`}"
+        yteal "Protocol password:" $mainpasswd
+        yteal "Trojan listen port:" "443"
+        yteal "Shadowsocks listen port:" $ssport
+        yteal "Shadowsocks encryption:" "chacha20-ietf-1305"
+        yteal "Snell listen port:" $snellport
         green "============================================"
-    elif ["$1" == "3"];then
+    elif [ "$1" == "3" ];then
         green "====================================================="
         green "VPS security settings have been successfully updated."
         yellow "Root login has been disabled."
-        bteal "SSH port has changed to:" $sshport
-        bteal "Username of admin account:" $newusername
-        bteal "Password of admin account:" $sshpasswd
+        yteal "SSH port has changed to:" $sshport
+        yteal "Username of admin account:" $newusername
+        yteal "Password of admin account:" $sshpasswd
         green "====================================================="
     else
-        green " ===================================="
-        green " ===================================="
+        green "==================================="
+        yteal "  System Requirement: " "CentOS8"
+        green "==================================="
     fi
     echo
+    sleep 2s
     green " 1. Install/Renew SSL Certificate"
-    green " 2. Install Docker"
-    yellow " 3. VPS Security Update"
+    green " 2. Install Docker and Trojan/SS/Snell"
+    yellow " 3. VPS Security Settings Update"
     red " 0. Exit Script"
     echo
     enter_promote "Enter a number:"
