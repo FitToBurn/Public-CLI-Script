@@ -286,7 +286,7 @@ start_menu(){
         green "================================================"
         green "SSL Certificate has been successfully installed."
         green "================================================"
-    elif ["$1" == "2"]
+    elif ["$1" == "2"];then
         green "============================================"
         green "Successfully installed Docker."
         bteal "VPS IPv4:" "${`curl ipv4.icanhazip.com`}"
@@ -296,7 +296,7 @@ start_menu(){
         bteal "Shadowsocks encryption:" "chacha20-ietf-1305"
         bteal "Snell listen port:" $snellport
         green "============================================"
-    elif ["$1" == "3"]
+    elif ["$1" == "3"];then
         green "====================================================="
         green "VPS security settings have been successfully updated."
         yellow "Root login has been disabled."
