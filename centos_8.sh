@@ -148,7 +148,7 @@ install_docker(){
     #portainer
     #docker pull portainer/portainer:latest
     #docker volume create portainer_data
-    #docker run -d -p 9000:9000 --name=portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainer/portainer
+    #docker run -d --security-opt seccomp=unconfined -p 9000:9000 --name=portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainer/portainer
     
     #v2fly
     docker pull v2fly/v2fly-core
@@ -195,7 +195,7 @@ install_docker(){
   }]
 }
 EOF
-    docker run -d --network=host --name=v2fly --restart=always -v /var/lib/docker/volumes/v2fly_config/config.json:/etc/v2ray/config.json -v /usr/src/cert:/cert v2fly/v2fly-core
+    docker run -d --security-opt seccomp=unconfined --network=host --name=v2fly --restart=always -v /var/lib/docker/volumes/v2fly_config/config.json:/etc/v2ray/config.json -v /usr/src/cert:/cert v2fly/v2fly-core
     
     #snell
     docker pull primovist/snell-docker
@@ -206,7 +206,7 @@ listen = 0.0.0.0:$snellport
 psk = $mainpasswd
 obfs = off
 EOF
-    docker run -d --network=host --name=snell --restart=always -v /var/lib/docker/volumes/snell_config/:/etc/snell/ primovist/snell-docker
+    docker run -d --security-opt seccomp=unconfined --network=host --name=snell --restart=always -v /var/lib/docker/volumes/snell_config/:/etc/snell/ primovist/snell-docker
     
     if [ "$mode" == "0" ];then
         start_menu 2        
