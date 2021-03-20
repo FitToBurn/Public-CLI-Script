@@ -364,7 +364,7 @@ sshport="NULL"
 newusername="NULL"
 adminpasswd="NULL"
 
-if [ $# -ne 1 ];then
+if [ $# -ne 0 ];then
     TEMP=`getopt -l protocol-passwd:,fallback-port:,ss-port:,snell-port:,ssh-port:,new-username:,admin-passwd: -- "$@"`
     eval set -- $TEMP
     while true ; do
@@ -373,7 +373,7 @@ if [ $# -ne 1 ];then
                         mainpasswd=$2;
                         shift 2;;
                     --fallback-port) 
-                        fallbackport=;
+                        fallbackport=$2;
                         shift 2;;
                     --ss-port) 
                         ssport=$2;
@@ -400,7 +400,7 @@ if [ $# -ne 1 ];then
     done
 fi
 
-if [ mainpasswd!="NULL" ] && [ fallbackport!="NULL" ] && [ ssport!="NULL" ] && [ snellport!="NULL" ] && [ sshport!="NULL" ] && [ newusername!="NULL" ] && [ adminpasswd!="NULL" ];then
+if [ "$mainpasswd" != "NULL" ] && [ "$fallbackport" != "NULL" ] && [ "$ssport" != "NULL" ] && [ "$snellport" != "NULL" ] && [ "$sshport" != "NULL" ] && [ "$newusername" != "NULL" ] && [ "$adminpasswd" != "NULL" ];then
     clear
     green "=============================================="
     yellow " Please confirm your VSP configuration:"
@@ -419,7 +419,7 @@ if [ mainpasswd!="NULL" ] && [ fallbackport!="NULL" ] && [ ssport!="NULL" ] && [
     enter_promote " Confirm(y/n):"
     read confirmation
     echo
-    if [ "$confirmation"=="y" ] || [ "$confirmation"=="Y" ];then
+    if [ "$confirmation" == "y" ] || [ "$confirmation" == "Y" ];then
         initialize
         cert
         install_docker
