@@ -81,16 +81,19 @@ cert(){
         if test -s /usr/src/cert/fullchain.cer; then
             #重启docker
             start_menu 1
+            return 0
         else
             red "=================================="
             red "Failed to install SSL Certificate."
             red "=================================="
+            return 1
         fi
 	
     else
         red "======================="
         red "Domain resolving error."
         red "======================="
+        return 1
     fi
 }
 
@@ -141,9 +144,9 @@ install_docker(){
     systemctl enable containerd
 
     #portainer
-    docker pull portainer/portainer:latest
-    docker volume create portainer_data
-    docker run -d -p 9000:9000 --name=portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainer/portainer
+    #docker pull portainer/portainer:latest
+    #docker volume create portainer_data
+    #docker run -d -p 9000:9000 --name=portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainer/portainer
     
     #v2fly
     docker pull v2fly/v2fly-core
@@ -420,25 +423,29 @@ if [ "$mainpasswd" != "NULL" ] && [ "$fallbackport" != "NULL" ] && [ "$ssport" !
     if [ "$confirmation" == "y" ] || [ "$confirmation" == "Y" ];then
         echo
         initialize
-        cert
-        install_docker
-        ssh_update
-        clear
-        green "=============================================="
-        green " Installation complete."
-        yellow " Root login has been disabled."
-        yteal " Protocol password:" $mainpasswd
-        yteal " Trojan listen port:" "443"
-        yteal " Trojan fallback port:" $fallbackport
-        yteal " Shadowsocks listen port:" $ssport
-        yteal " Shadowsocks encryption:" "chacha20-ietf-1305"
-        yteal " Snell listen port:" $snellport
-        yteal " SSH port has been changed to:" $sshport
-        yteal " Username of admin account:" $newusername
-        yteal " Password of admin account:" $adminpasswd
-        green "=============================================="
+        exitstate=cert
+        if [ "$exitstate" != "1" ];then
+            install_docker
+            ssh_update
+            clear
+            green "=============================================="
+            green " Installation complete."
+            yellow " Root login has been disabled."
+            yteal " Protocol password:" $mainpasswd
+            yteal " Trojan listen port:" "443"
+            yteal " Trojan fallback port:" $fallbackport
+            yteal " Shadowsocks listen port:" $ssport
+            yteal " Shadowsocks encryption:" "chacha20-ietf-1305"
+            yteal " Snell listen port:" $snellport
+            yteal " SSH port has been changed to:" $sshport
+            yteal " Username of admin account:" $newusername
+            yteal " Password of admin account:" $adminpasswd
+            green "=============================================="
+        else
+            exit 0
     else
         red " Exit"
+        echo
         exit 0
     fi
 else
