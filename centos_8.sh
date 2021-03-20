@@ -364,39 +364,41 @@ sshport="NULL"
 newusername="NULL"
 adminpasswd="NULL"
 
-TEMP=`getopt -l protocol-passwd:,fallback-port:,ss-port:,snell-port:,ssh-port:,new-username:,admin-passwd: -- "$@"`
-eval set -- $TEMP
-while true ; do
-        case "$1" in
-                --protocol-passwd) 
-                    mainpasswd=$2;
-                    shift 2;;
-	            --fallback-port) 
-                    fallbackport=;
-                    shift 2;;
-	            --ss-port) 
-                    ssport=$2;
-                    shift 2;;
-                --snell-port) 
-                    snellport=$2;
-                    shift 2;;
-                --ssh-port) 
-                    sshport=$2;
-                    shift 2;;
-                --new-username) 
-                    newusername=$2;
-                    shift 2;;
-                --admin-passwd) 
-                    adminpasswd=$2;
-                    shift 2;;
-                --) 
-                    shift ; 
-                    break ;;
-	            *) 
-                    red "Invalid option.";
-                    exit 1;;
-        esac
-done
+if [ $#!=1 ];then
+    TEMP=`getopt -l protocol-passwd:,fallback-port:,ss-port:,snell-port:,ssh-port:,new-username:,admin-passwd: -- "$@"`
+    eval set -- $TEMP
+    while true ; do
+            case "$1" in
+                    --protocol-passwd) 
+                        mainpasswd=$2;
+                        shift 2;;
+                    --fallback-port) 
+                        fallbackport=;
+                        shift 2;;
+                    --ss-port) 
+                        ssport=$2;
+                        shift 2;;
+                    --snell-port) 
+                        snellport=$2;
+                        shift 2;;
+                    --ssh-port) 
+                        sshport=$2;
+                        shift 2;;
+                    --new-username) 
+                        newusername=$2;
+                        shift 2;;
+                    --admin-passwd) 
+                        adminpasswd=$2;
+                        shift 2;;
+                    --) 
+                        shift ; 
+                        break ;;
+                    *) 
+                        red "Invalid option.";
+                        exit 1;;
+            esac
+    done
+fi
 
 if [ mainpasswd!="NULL" ] && [ fallbackport!="NULL" ] && [ ssport!="NULL" ] && [ snellport!="NULL" ] && [ sshport!="NULL" ] && [ newusername!="NULL" ] && [ adminpasswd!="NULL" ];then
     clear
