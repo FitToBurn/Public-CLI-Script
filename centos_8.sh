@@ -13,7 +13,7 @@ yteal(){
     echo -e "\033[36m\033[01m$2\033[0m"
 }
 enter_promote(){
-    echo -ne "\033[44m\033[01m$1\033[0m"
+    echo -ne "\033[34m\033[01m$1\033[0m"
 }
 
 initialize(){
@@ -300,16 +300,16 @@ start_menu(){
         yteal "Password of admin account:" $sshpasswd
         green "====================================================="
     else
-        green "==================================="
-        yteal "  System Requirement: " "CentOS8"
-        green "==================================="
+        green "========================================="
+        yteal "       System Requirement: " "CentOS8"
+        green "========================================="
     fi
     echo
     sleep 2s
-    green " 1. Install/Renew SSL Certificate"
-    green " 2. Install Docker and Trojan/SS/Snell"
-    yellow " 3. VPS Security Settings Update"
-    red " 0. Exit Script"
+    green "  1. Install/Renew SSL Certificate"
+    green "  2. Install Docker and Trojan/SS/Snell"
+    yellow "  3. VPS Security Settings Update"
+    red "  0. Exit Script"
     echo
     enter_promote "Enter a number:"
     read num
