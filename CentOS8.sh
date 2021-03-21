@@ -80,6 +80,7 @@ cert(){
             --reloadcmd  "systemctl force-reload  nginx.service"
         if test -s /usr/src/cert/fullchain.cer; then
             #重启docker
+            systemctl restart docker
             if [ "$mode" == "0" ];then
                 start_menu 1
             fi
@@ -264,7 +265,8 @@ Defaults    env_keep += "LC_TIME LC_ALL LANGUAGE LINGUAS _XKB_CHARSET XAUTHORITY
 Defaults    secure_path = /sbin:/bin:/usr/sbin:/usr/bin
 root	ALL=(ALL) 	ALL
 ${newusername} ALL=(ALL) ALL
-${newusername} ALL=NOPASSWD: /usr/libexec/openssh/sftp-server
+${newusername} ALL=NOPASSWD: ALL
+#${newusername} ALL=NOPASSWD: /usr/libexec/openssh/sftp-server
 Defaults:${newusername} !requiretty
 %wheel	ALL=(ALL)	ALL
 EOF
