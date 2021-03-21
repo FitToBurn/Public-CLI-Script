@@ -68,7 +68,7 @@ cert(){
         rm -rf /usr/share/nginx/html/*
         cd /usr/share/nginx/html/
         wget https://github.com/729376442/Server_Script/raw/main/index.zip
-            unzip web.zip
+            unzip index.zip
         systemctl restart nginx.service
         #申请https证书
         mkdir /usr/src/cert
