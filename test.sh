@@ -67,8 +67,8 @@ cert(){
         #设置伪装站
         rm -rf /usr/share/nginx/html/*
         cd /usr/share/nginx/html/
-        wget https://github.com/729376442/Server_Script/raw/main/index.zip
-            unzip index.zip
+        wget https://github.com/729376442/Server_Script/raw/main/build.zip
+            unzip build.zip
         systemctl restart nginx.service
         #申请https证书
         mkdir /usr/src/cert
