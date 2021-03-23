@@ -209,6 +209,10 @@ obfs = off
 EOF
     docker run -d --security-opt seccomp=unconfined --network=host --name=snell --restart=always -v /var/lib/docker/volumes/snell_config/:/etc/snell/ primovist/snell-docker
     
+    #subconverter 需要SSL
+    #docker pull tindy2013/subconverter
+    #docker run -d --name=subconverter --restart=always --security-opt seccomp=unconfined -p 25500:25500 tindy2013/subconverter
+
     if [ "$mode" == "0" ];then
         start_menu 2        
     fi
