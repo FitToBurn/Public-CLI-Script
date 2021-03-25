@@ -146,31 +146,46 @@ install_docker(){
     systemctl enable docker
     systemctl enable containerd
 
-    #portainer
-    #docker pull portainer/portainer:latest
-    #docker volume create portainer_data
-    #docker run -d --security-opt seccomp=unconfined -p 9000:9000 --name=portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainer/portainer
+    ###===Current List===###
+    #- Portainer
+    #- SubConverter
+    # Xray
+    # Snell
+
+    #Portainer 需要SSL/Fallback Port
+    docker pull portainer/portainer:latest
+    docker volume create portainer_data
+    docker run -d --security-opt seccomp=unconfined -p 9000:9000 --name=portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v /var/lib/docker/volumes/portainer_data/:/data/ portainer/portainer
     
-    #v2fly
-    docker pull v2fly/v2fly-core
-    docker volume create v2fly_config
-	  cat > /var/lib/docker/volumes/v2fly_config/config.json <<-EOF
+    #SubConverter 需要SSL/Fallback Port
+    #docker pull tindy2013/subconverter:latest
+    #docker run -d --name=subconverter --restart=always --security-opt seccomp=unconfined -p 25500:25500 tindy2013/subconverter
+
+    docker pull teddysun/xray:latest
+    docker volume create xray_config
+    cat > /var/lib/docker/volumes/xray_config/config.json <<-EOF
 {
   "log": {
     "loglevel": "warning"
   },
   "inbounds": [
     {
-      "listen": "0.0.0.0",
       "port": 443, 
-      "protocol": "trojan",
+      "protocol": "vless",
       "settings": {
-        "clients":[{"password": "$mainpasswd"}],
-        "fallbacks": [{"dest": $fallbackport}]
+        "clients":[{
+                    "id": "$mainpasswd",
+                    "flow": "xtls-rprx-direct"
+                }],
+        "decryption": "none",
+        "fallbacks": [{
+                    "dest": $fallbackport,
+                    "xver": 1
+                }]
       },
       "streamSettings": {
         "network": "tcp",
-        "security": "tls",
+        "security": "xtls",
         "tlsSettings": {
           "alpn": ["http/1.1"],
           "certificates": [{
@@ -181,7 +196,22 @@ install_docker(){
       }
     },
     {
-      "listen": "0.0.0.0",
+        "port": 444,
+        "listen": "127.0.0.1",
+        "protocol": "trojan",
+        "settings": {
+            "clients": [{"password": "$mainpasswd"}],
+            "fallbacks": [{"dest": 9000}]
+        },
+        "streamSettings": {
+            "network": "tcp",
+            "security": "none",
+            "tcpSettings": {
+                "acceptProxyProtocol": true
+            }
+        }
+    },
+    {
       "port": $ssport, 
       "protocol": "shadowsocks",
       "settings":{
@@ -196,10 +226,10 @@ install_docker(){
   }]
 }
 EOF
-    docker run -d --security-opt seccomp=unconfined --network=host --name=v2fly --restart=always -v /var/lib/docker/volumes/v2fly_config/config.json:/etc/v2ray/config.json -v /usr/src/cert:/cert v2fly/v2fly-core
+    docker run -d --security-opt seccomp=unconfined --network=host --name xray --restart=always -v /var/lib/docker/volumes/xray_config/:/etc/xray/ teddysun/xray
     
     #snell
-    docker pull primovist/snell-docker
+    docker pull primovist/snell-docker:latest
     docker volume create snell_config
     cat > /var/lib/docker/volumes/snell_config/snell-server.conf <<-EOF
 [snell-server]
@@ -208,10 +238,7 @@ psk = $mainpasswd
 obfs = off
 EOF
     docker run -d --security-opt seccomp=unconfined --network=host --name=snell --restart=always -v /var/lib/docker/volumes/snell_config/:/etc/snell/ primovist/snell-docker
-    
-    #subconverter 需要SSL
-    #docker pull tindy2013/subconverter
-    #docker run -d --name=subconverter --restart=always --security-opt seccomp=unconfined -p 25500:25500 tindy2013/subconverter
+
 
     if [ "$mode" == "0" ];then
         start_menu 2        
