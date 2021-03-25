@@ -79,7 +79,7 @@ cert(){
             --fullchain-file /usr/src/cert/fullchain.cer \
             --reloadcmd  "systemctl force-reload  nginx.service"
         if test -s /usr/src/cert/fullchain.cer; then
-            #重启docker
+            #Restart docker
             systemctl restart docker
             if [ "$mode" == "0" ];then
                 start_menu 1
@@ -149,43 +149,107 @@ install_docker(){
     ###===Current List===###
     #- Portainer
     #- SubConverter
-    # Xray
+    #- Xray
+    # V2Ray
     # Snell
 
-    #Portainer 需要SSL/Fallback Port
-    docker pull portainer/portainer:latest
-    docker volume create portainer_data
-    docker run -d --security-opt seccomp=unconfined -p 9000:9000 --name=portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v /var/lib/docker/volumes/portainer_data/:/data/ portainer/portainer
+    # Portainer 需要SSL/Fallback Port
+    # docker pull portainer/portainer:latest
+    # docker volume create portainer_data
+    # docker run -d --security-opt seccomp=unconfined -p 9000:9000 --name=portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v /var/lib/docker/volumes/portainer_data/:/data/ portainer/portainer
     
-    #SubConverter 需要SSL/Fallback Port
-    #docker pull tindy2013/subconverter:latest
-    #docker run -d --name=subconverter --restart=always --security-opt seccomp=unconfined -p 25500:25500 tindy2013/subconverter
+    # SubConverter 需要SSL/Fallback Port
+    # docker pull tindy2013/subconverter:latest
+    # docker run -d --name=subconverter --restart=always --security-opt seccomp=unconfined -p 25500:25500 tindy2013/subconverter
 
-    docker pull teddysun/xray:latest
-    docker volume create xray_config
-    cat > /var/lib/docker/volumes/xray_config/config.json <<-EOF
+    # Xray
+#     docker pull teddysun/xray:latest
+#     docker volume create xray_config
+#     cat > /var/lib/docker/volumes/xray_config/config.json <<-EOF
+# {
+#   "log": {
+#     "loglevel": "warning"
+#   },
+#   "inbounds": [
+#     {
+#       "port": 443, 
+#       "protocol": "vless",
+#       "settings": {
+#         "clients":[{
+#                     "id": "[UUID]",//SetUUID, better to generate one in the script
+#                     "flow": "xtls-rprx-direct"
+#                 }],
+#         "decryption": "none",
+#         "fallbacks": [{
+#                     "dest": 444,
+#                     "xver": 1
+#                 }]
+#       },
+#       "streamSettings": {
+#         "network": "tcp",
+#         "security": "xtls",
+#         "xtlsSettings": {
+#           "alpn": ["http/1.1"],
+#           "certificates": [{
+#             "certificateFile": "/cert/fullchain.cer",
+#             "keyFile": "/cert/private.key"
+#           }]
+#         }
+#       }
+#     },
+#     {
+#         "port": 444,
+#         "listen": "127.0.0.1",
+#         "protocol": "trojan",
+#         "settings": {
+#             "clients": [{"password": "$mainpasswd"}],
+#             "fallbacks": [{"dest": $fallbackport}]
+#         },
+#         "streamSettings": {
+#             "network": "tcp",
+#             "security": "none",
+#             "tcpSettings": {
+#                 "acceptProxyProtocol": true
+#             }
+#         }
+#     },
+#     {
+#       "port": $ssport, 
+#       "protocol": "shadowsocks",
+#       "settings":{
+#           "method": "chacha20-ietf-poly1305",
+#           "ota": false, 
+#           "password": "$mainpasswd"
+#       }
+#     }
+#   ],
+#   "outbounds": [{ 
+#     "protocol": "freedom"
+#   }]
+# }
+# EOF
+#     docker run -d --security-opt seccomp=unconfined --network=host --name xray --restart=always -v /var/lib/docker/volumes/xray_config/:/etc/xray/ -v /usr/src/cert:/cert teddysun/xray
+    
+    #V2fly
+    docker pull v2fly/v2fly-core
+    docker volume create v2fly_config
+	  cat > /var/lib/docker/volumes/v2fly_config/config.json <<-EOF
 {
   "log": {
     "loglevel": "warning"
   },
   "inbounds": [
     {
+      "listen": "0.0.0.0",
       "port": 443, 
-      "protocol": "vless",
+      "protocol": "trojan",
       "settings": {
-        "clients":[{
-                    "id": "$mainpasswd",
-                    "flow": "xtls-rprx-direct"
-                }],
-        "decryption": "none",
-        "fallbacks": [{
-                    "dest": $fallbackport,
-                    "xver": 1
-                }]
+        "clients":[{"password": "$mainpasswd"}],
+        "fallbacks": [{"dest": $fallbackport}]
       },
       "streamSettings": {
         "network": "tcp",
-        "security": "xtls",
+        "security": "tls",
         "tlsSettings": {
           "alpn": ["http/1.1"],
           "certificates": [{
@@ -196,22 +260,7 @@ install_docker(){
       }
     },
     {
-        "port": 444,
-        "listen": "127.0.0.1",
-        "protocol": "trojan",
-        "settings": {
-            "clients": [{"password": "$mainpasswd"}],
-            "fallbacks": [{"dest": 9000}]
-        },
-        "streamSettings": {
-            "network": "tcp",
-            "security": "none",
-            "tcpSettings": {
-                "acceptProxyProtocol": true
-            }
-        }
-    },
-    {
+      "listen": "0.0.0.0",
       "port": $ssport, 
       "protocol": "shadowsocks",
       "settings":{
@@ -226,9 +275,9 @@ install_docker(){
   }]
 }
 EOF
-    docker run -d --security-opt seccomp=unconfined --network=host --name xray --restart=always -v /var/lib/docker/volumes/xray_config/:/etc/xray/ teddysun/xray
+    docker run -d --security-opt seccomp=unconfined --network=host --name=v2fly --restart=always -v /var/lib/docker/volumes/v2fly_config/config.json:/etc/v2ray/config.json -v /usr/src/cert:/cert v2fly/v2fly-core
     
-    #snell
+    #Snell
     docker pull primovist/snell-docker:latest
     docker volume create snell_config
     cat > /var/lib/docker/volumes/snell_config/snell-server.conf <<-EOF
