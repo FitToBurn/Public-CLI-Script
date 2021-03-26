@@ -524,6 +524,7 @@ if [ "$mainpasswd" != "NULL" ] && [ "$fallbackport" != "NULL" ] && [ "$ssport" !
             green "============================================================"
             green " Installation complete."
             yellow " Root login has been disabled."
+            yteal " VPS IPv4:" $(curl -s ipv4.icanhazip.com)
             yteal " Protocol password:" $mainpasswd
             yteal " Trojan listen port:" "443"
             yteal " Trojan fallback port:" $fallbackport
