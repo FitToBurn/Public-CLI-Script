@@ -156,7 +156,7 @@ install_docker(){
     # Portainer 需要SSL/Fallback Port
     # docker pull portainer/portainer:latest
     # docker volume create portainer_data
-    # docker run -d --security-opt seccomp=unconfined -p 9000:9000 --name=portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v /var/lib/docker/volumes/portainer_data/:/data/ portainer/portainer
+    # docker run -d --security-opt seccomp=unconfined -p 9000:9000 --name=portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v /var/lib/docker/volumes/portainer_data/:/data/ -v /usr/src/cert:/cert --ssl --sslcert /cert/fullchain.cer --sslkey /cert/private.key portainer/portainer
     
     # SubConverter 需要SSL/Fallback Port
     # docker pull tindy2013/subconverter:latest
