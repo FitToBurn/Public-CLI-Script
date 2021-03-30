@@ -153,10 +153,10 @@ install_docker(){
     # V2Ray
     # Snell
 
-    # Portainer 需要SSL/Fallback Port
-    # docker pull portainer/portainer:latest
+    # Portainer
+    # docker pull portainer/portainer-ce:latest
     # docker volume create portainer_data
-    # docker run -d --security-opt seccomp=unconfined -p 9000:9000 --name=portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v /var/lib/docker/volumes/portainer_data/:/data/ -v /usr/src/cert:/cert --ssl --sslcert /cert/fullchain.cer --sslkey /cert/private.key portainer/portainer
+    # docker run -d --security-opt seccomp=unconfined -p 9000:9000 --name=portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v /var/lib/docker/volumes/portainer_data/:/data/ -v /usr/src/cert:/cert portainer/portainer-ce --ssl --sslcert /cert/fullchain.cer --sslkey /cert/private.key
     
     # SubConverter 需要SSL/Fallback Port
     # docker pull tindy2013/subconverter:latest
