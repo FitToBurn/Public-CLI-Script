@@ -147,20 +147,93 @@ install_docker(){
     systemctl enable containerd
 
     ###===Current List===###
-    #- Portainer
-    #- SubConverter
     #- Xray
-    # V2Ray
-    # Snell
+    #~ Portainer
+    #~ SubConverter
+    #+ V2Ray
+    #+ Snell
 
-    # Portainer
-    # docker pull portainer/portainer-ce:latest
-    # docker volume create portainer_data
-    # docker run -d --security-opt seccomp=unconfined -p 9000:9000 --name=portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v /var/lib/docker/volumes/portainer_data/:/data/ -v /usr/src/cert:/cert portainer/portainer-ce --ssl --sslcert /cert/fullchain.cer --sslkey /cert/private.key
+    ###===Issue===###
+    # 1.Need --privileged/--security-opt seccomp=unconfined for some cases.
+
+    if [ "$containeropt" == "A" ] || [ "$containeropt" == "P" ];then
+        # Portainer
+        docker pull portainer/portainer-ce:latest
+        docker volume create portainer_data
+        docker run -d --security-opt seccomp=unconfined -p 9000:9000 --name=portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v /var/lib/docker/volumes/portainer_data/:/data/ -v /usr/src/cert:/cert portainer/portainer-ce --ssl --sslcert /cert/fullchain.cer --sslkey /cert/private.key
+    fi
     
-    # SubConverter 需要SSL/Fallback Port
-    # docker pull tindy2013/subconverter:latest
-    # docker run -d --name=subconverter --restart=always --security-opt seccomp=unconfined -p 25500:25500 tindy2013/subconverter
+    if [ "$containeropt" == "A" ] || [ "$containeropt" == "S" ];then
+        # SubConverter
+        docker pull tindy2013/subconverter:latest
+        docker run -d --name=subconverter --restart=always --security-opt seccomp=unconfined -p 25500:25500 tindy2013/subconverter
+        docker stop subconverter
+        cat > /etc/nginx/nginx.conf <<-EOF
+user nginx;
+worker_processes auto;
+error_log /var/log/nginx/error.log;
+pid /run/nginx.pid;
+include /usr/share/nginx/modules/*.conf;
+
+events {
+    worker_connections 1024;
+}
+
+http {
+    log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+                      '$status $body_bytes_sent "$http_referer" '
+                      '"$http_user_agent" "$http_x_forwarded_for"';
+
+    access_log  /var/log/nginx/access.log  main;
+
+    sendfile            on;
+    tcp_nopush          on;
+    tcp_nodelay         on;
+    keepalive_timeout   65;
+    types_hash_max_size 2048;
+
+    include             /etc/nginx/mime.types;
+    default_type        application/octet-stream;
+    include /etc/nginx/conf.d/*.conf;
+
+    server {
+        listen       80 default_server;
+        listen       [::]:80 default_server;
+        server_name  _;
+        root         /usr/share/nginx/html;
+
+        include /etc/nginx/default.d/*.conf;
+
+        location / {
+        }
+
+        error_page 404 /404.html;
+            location = /40x.html {
+        }
+
+        error_page 500 502 503 504 /50x.html;
+            location = /50x.html {
+        }
+    }
+
+    server {
+        listen 500 ssl http2;
+        server_name  _;
+        gzip on;
+        ssl_certificate /usr/src/cert/fullchain.cer;
+        ssl_certificate_key /usr/src/cert/private.key;
+
+        location / {
+            proxy_pass http://127.0.0.1:25500/;
+            proxy_set_header  Host                $http_host;
+            proxy_set_header  X-Real-IP           $remote_addr;
+        }
+    }    
+
+}
+EOF
+        nginx -s reload
+    fi
 
     # Xray
 #     docker pull teddysun/xray:latest
@@ -456,10 +529,11 @@ snellport="NULL"
 sshport="NULL"
 newusername="NULL"
 adminpasswd="NULL"
+containeropt="NULL"
 mode=0
 
 if [ $# -ne 0 ];then
-    TEMP=`getopt -o "" -l protocol-passwd:,fallback-port:,ss-port:,snell-port:,ssh-port:,new-username:,admin-passwd: -- "$@"`
+    TEMP=`getopt -o "" -l protocol-passwd:,fallback-port:,ss-port:,snell-port:,ssh-port:,new-username:,admin-passwd:,container-opt: -- "$@"`
     eval set -- $TEMP
     while true ; do
             case "$1" in
@@ -483,6 +557,9 @@ if [ $# -ne 0 ];then
                         shift 2;;
                     --admin-passwd) 
                         adminpasswd=$2;
+                        shift 2;;
+                    --container-opt) 
+                        containeropt=$2;
                         shift 2;;
                     --) 
                         shift ; 
