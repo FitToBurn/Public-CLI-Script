@@ -303,7 +303,7 @@ EOF
 #     docker run -d --security-opt seccomp=unconfined --network=host --name xray --restart=always -v /var/lib/docker/volumes/xray_config/:/etc/xray/ -v /usr/src/cert:/cert teddysun/xray
     
     #V2fly
-    docker pull v2fly/v2fly-core
+    docker pull v2fly/v2fly-core:latest
     docker volume create v2fly_config
 	  cat > /var/lib/docker/volumes/v2fly_config/config.json <<-EOF
 {
