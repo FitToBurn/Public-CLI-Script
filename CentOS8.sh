@@ -167,7 +167,6 @@ install_docker(){
         # SubConverter
         docker pull tindy2013/subconverter:latest
         docker run -d --name=subconverter --restart=always --security-opt seccomp=unconfined -p 25500:25500 tindy2013/subconverter
-        docker stop subconverter
         cat > /etc/nginx/nginx.conf <<-EOF
 user nginx;
 worker_processes auto;
@@ -180,9 +179,9 @@ events {
 }
 
 http {
-    log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
-                      '$status $body_bytes_sent "$http_referer" '
-                      '"$http_user_agent" "$http_x_forwarded_for"';
+    log_format  main  '\$remote_addr - \$remote_user [\$time_local] "\$request" '
+                      '\$status \$body_bytes_sent "\$http_referer" '
+                      '"\$http_user_agent" "\$http_x_forwarded_for"';
 
     access_log  /var/log/nginx/access.log  main;
 
@@ -225,8 +224,8 @@ http {
 
         location / {
             proxy_pass http://127.0.0.1:25500/;
-            proxy_set_header  Host                $http_host;
-            proxy_set_header  X-Real-IP           $remote_addr;
+            proxy_set_header  Host                \$http_host;
+            proxy_set_header  X-Real-IP           \$remote_addr;
         }
     }    
 
