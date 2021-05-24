@@ -103,11 +103,11 @@ cert(){
 protocol_config(){
     randompasswd=$(cat /dev/urandom | head -1 | md5sum | head -c 12)
     randomssport=$(shuf -i 10000-14999 -n 1)
-    randomsnellport=$(shuf -i 15000-19999 -n 1)
+    # randomsnellport=$(shuf -i 15000-19999 -n 1)
 
     green "========================================================"
     echo
-    yellow " Enter the PASSWORD for Trojan, Shadowsocks and Snell:"
+    yellow " Enter the PASSWORD for Trojan, Shadowsocks:"
     yteal " ==Default==:" "${randompasswd}"
     enter_promote " Your choice:"
     read mainpasswd
@@ -128,12 +128,13 @@ protocol_config(){
     [ -z "${ssport}" ] && ssport=${randomssport}
     echo
 
-    yellow " Enter the port for Snell [1-65535]:"
-    yteal " ==Default==:" "${randomsnellport}"
-    enter_promote " Your choice:"
-    read snellport
-    [ -z "${snellport}" ] && snellport=${randomsnellport}
-    echo
+    # yellow " Enter the port for Snell [1-65535]:"
+    # yteal " ==Default==:" "${randomsnellport}"
+    # enter_promote " Your choice:"
+    # read snellport
+    # [ -z "${snellport}" ] && snellport=${randomsnellport}
+    # echo
+
     green "========================================================"
     echo
 
@@ -148,10 +149,10 @@ install_docker(){
 
     ###===Current List===###
     #- Xray
+    #- Snell
     #~ Portainer
     #~ SubConverter
     #+ V2Ray
-    #+ Snell
 
     ###===Issue===###
     # 1.Need --privileged/--security-opt seccomp=unconfined for some cases.
@@ -302,6 +303,17 @@ EOF
 # EOF
 #     docker run -d --security-opt seccomp=unconfined --network=host --name xray --restart=always -v /var/lib/docker/volumes/xray_config/:/etc/xray/ -v /usr/src/cert:/cert teddysun/xray
     
+    #Snell
+#     docker pull primovist/snell-docker:latest
+#     docker volume create snell_config
+#     cat > /var/lib/docker/volumes/snell_config/snell-server.conf <<-EOF
+# [snell-server]
+# listen = 0.0.0.0:$snellport
+# psk = $mainpasswd
+# obfs = off
+# EOF
+#     docker run -d --security-opt seccomp=unconfined --network=host --name=snell --restart=always -v /var/lib/docker/volumes/snell_config/:/etc/snell/ primovist/snell-docker
+
     #V2fly
     docker pull v2fly/v2fly-core:latest
     docker volume create v2fly_config
@@ -348,18 +360,6 @@ EOF
 }
 EOF
     docker run -d --security-opt seccomp=unconfined --network=host --name=v2fly --restart=always -v /var/lib/docker/volumes/v2fly_config/config.json:/etc/v2ray/config.json -v /usr/src/cert:/cert v2fly/v2fly-core
-    
-    #Snell
-    docker pull primovist/snell-docker:latest
-    docker volume create snell_config
-    cat > /var/lib/docker/volumes/snell_config/snell-server.conf <<-EOF
-[snell-server]
-listen = 0.0.0.0:$snellport
-psk = $mainpasswd
-obfs = off
-EOF
-    docker run -d --security-opt seccomp=unconfined --network=host --name=snell --restart=always -v /var/lib/docker/volumes/snell_config/:/etc/snell/ primovist/snell-docker
-
 
     if [ "$mode" == "0" ];then
         start_menu 2        
@@ -471,7 +471,7 @@ start_menu(){
         yteal " Trojan fallback port:" $fallbackport
         yteal " Shadowsocks listen port:" $ssport
         yteal " Shadowsocks encryption:" "chacha20-ietf-1305"
-        yteal " Snell listen port:" $snellport
+        # yteal " Snell listen port:" $snellport
         green "=============================================="
     elif [ "$1" == "3" ];then
         green "======================================================="
@@ -488,7 +488,7 @@ start_menu(){
     fi
     echo
     green "  1. Install/Renew SSL Certificate"
-    green "  2. Install Docker and Trojan/SS/Snell"
+    green "  2. Install Docker and Trojan/SS"
     yellow "  3. VPS Security Settings Update"
     red "  0. Exit Script"
     echo
@@ -524,7 +524,7 @@ start_menu(){
 mainpasswd="NULL"
 fallbackport="NULL"
 ssport="NULL"
-snellport="NULL"
+# snellport="NULL"
 sshport="NULL"
 newusername="NULL"
 adminpasswd="NULL"
@@ -532,7 +532,8 @@ containeropt="NULL"
 mode=0
 
 if [ $# -ne 0 ];then
-    TEMP=`getopt -o "" -l protocol-passwd:,fallback-port:,ss-port:,snell-port:,ssh-port:,new-username:,admin-passwd:,container-opt: -- "$@"`
+    # snell-port:,
+    TEMP=`getopt -o "" -l protocol-passwd:,fallback-port:,ss-port:,ssh-port:,new-username:,admin-passwd:,container-opt: -- "$@"`
     eval set -- $TEMP
     while true ; do
             case "$1" in
@@ -545,9 +546,9 @@ if [ $# -ne 0 ];then
                     --ss-port) 
                         ssport=$2;
                         shift 2;;
-                    --snell-port) 
-                        snellport=$2;
-                        shift 2;;
+                    # --snell-port) 
+                    #     snellport=$2;
+                    #     shift 2;;
                     --ssh-port) 
                         sshport=$2;
                         shift 2;;
@@ -569,8 +570,8 @@ if [ $# -ne 0 ];then
             esac
     done
 fi
-
-if [ "$mainpasswd" != "NULL" ] && [ "$fallbackport" != "NULL" ] && [ "$ssport" != "NULL" ] && [ "$snellport" != "NULL" ] && [ "$sshport" != "NULL" ] && [ "$newusername" != "NULL" ] && [ "$adminpasswd" != "NULL" ];then
+# && [ "$snellport" != "NULL" ]
+if [ "$mainpasswd" != "NULL" ] && [ "$fallbackport" != "NULL" ] && [ "$ssport" != "NULL" ] && [ "$sshport" != "NULL" ] && [ "$newusername" != "NULL" ] && [ "$adminpasswd" != "NULL" ];then
     clear
     green "============================================================"
     yellow " Please confirm your VPS configuration:"
@@ -580,7 +581,7 @@ if [ "$mainpasswd" != "NULL" ] && [ "$fallbackport" != "NULL" ] && [ "$ssport" !
     yteal " Trojan fallback port:" $fallbackport
     yteal " Shadowsocks listen port:" $ssport
     yteal " Shadowsocks encryption:" "chacha20-ietf-1305"
-    yteal " Snell listen port:" $snellport
+    # yteal " Snell listen port:" $snellport
     yteal " SSH port will be changed to:" $sshport
     yteal " Username of admin account:" $newusername
     yteal " Password of admin account:" $adminpasswd
@@ -606,7 +607,7 @@ if [ "$mainpasswd" != "NULL" ] && [ "$fallbackport" != "NULL" ] && [ "$ssport" !
             yteal " Trojan fallback port:" $fallbackport
             yteal " Shadowsocks listen port:" $ssport
             yteal " Shadowsocks encryption:" "chacha20-ietf-1305"
-            yteal " Snell listen port:" $snellport
+            # yteal " Snell listen port:" $snellport
             yteal " SSH port has been changed to:" $sshport
             yteal " Username of admin account:" $newusername
             yteal " Password of admin account:" $adminpasswd
