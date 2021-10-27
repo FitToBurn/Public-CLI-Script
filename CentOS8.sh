@@ -16,6 +16,10 @@ enter_promote(){
     echo -ne "\033[34m\033[01m$1\033[0m"
 }
 
+# Todo
+# 1.优化防火墙 仅block http口
+# 2.acme.sh 使用Zerossl优化
+
 initialize(){
     
     #开启BBR加速
@@ -34,7 +38,6 @@ initialize(){
     #关闭防火墙和SELINUX
     systemctl stop firewalld
     systemctl disable firewalld
-    #优化 block http口
     CHECK=$(grep SELINUX= /etc/selinux/config | grep -v "#")
     if [ "$CHECK" == "SELINUX=enforcing" ]; then
         sed -i 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/selinux/config
@@ -131,13 +134,6 @@ protocol_config(){
     [ -z "${ssport}" ] && ssport=${randomssport}
     echo
 
-    # yellow " Enter the port for Snell [1-65535]:"
-    # yteal " ==Default==:" "${randomsnellport}"
-    # enter_promote " Your choice:"
-    # read snellport
-    # [ -z "${snellport}" ] && snellport=${randomsnellport}
-    # echo
-
     green "========================================================"
     echo
 
@@ -157,9 +153,6 @@ install_docker(){
     #~ livemonitor
     #~ downloader
     #+ V2Ray
-
-    ###===Issue===###
-    # 1.Need --privileged/--security-opt seccomp=unconfined for some cases.
 
     if [ "$containeropt" == "M" ];then
         # Portainer
