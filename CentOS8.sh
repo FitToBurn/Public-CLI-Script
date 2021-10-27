@@ -19,6 +19,7 @@ enter_promote(){
 # Todo
 # 1.优化防火墙 仅block http口
 # 2.acme.sh 使用Zerossl优化
+# 3.Cert 结束后 先检测是否有docker.service再决定要不要restart
 
 initialize(){
     
@@ -158,7 +159,7 @@ install_docker(){
         # Portainer
         docker pull portainer/portainer-ce:latest
         docker volume create portainer_data
-        docker run -d -p 9000:9000 --name=portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v /var/lib/docker/volumes/portainer_data/:/data/ -v /usr/src/cert:/cert portainer/portainer-ce --ssl --sslcert /cert/fullchain.cer --sslkey /cert/private.key
+        docker run -d -p 600:9443 -p 8000:8000 --name=portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v /var/lib/docker/volumes/portainer_data/:/data/ -v /usr/src/cert:/cert portainer/portainer-ce --sslcert /cert/fullchain.cer --sslkey /cert/private.key
 
         # SubConverter
         docker pull tindy2013/subconverter:latest
@@ -269,7 +270,7 @@ EOF
 
         # downloader
         docker pull bigdaddywrangler/downloader
-        docker run -d --name=vps-downloader --restart=always -p 25501:25501 bigdaddywrangler/vps-downloader:latest
+        docker run -d --name=vps-downloader --restart=always -p 25501:25501 bigdaddywrangler/downloader:latest
         
         nginx -s reload
     fi
@@ -559,7 +560,6 @@ containeropt="NULL"
 mode=0
 
 if [ $# -ne 0 ];then
-    # snell-port:,
     TEMP=`getopt -o "" -l protocol-passwd:,fallback-port:,ss-port:,ssh-port:,new-username:,admin-passwd:,container-opt: -- "$@"`
     eval set -- $TEMP
     while true ; do
@@ -573,9 +573,6 @@ if [ $# -ne 0 ];then
                     --ss-port) 
                         ssport=$2;
                         shift 2;;
-                    # --snell-port) 
-                    #     snellport=$2;
-                    #     shift 2;;
                     --ssh-port) 
                         sshport=$2;
                         shift 2;;
