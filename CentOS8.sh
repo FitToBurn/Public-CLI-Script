@@ -34,6 +34,7 @@ initialize(){
     #关闭防火墙和SELINUX
     systemctl stop firewalld
     systemctl disable firewalld
+    #优化 block http口
     CHECK=$(grep SELINUX= /etc/selinux/config | grep -v "#")
     if [ "$CHECK" == "SELINUX=enforcing" ]; then
         sed -i 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/selinux/config
@@ -44,6 +45,7 @@ initialize(){
         setenforce 0
     fi
     yum -y install bind-utils wget unzip zip curl tar
+    yum install libseccomp-devel
 
 }
 
@@ -149,25 +151,24 @@ install_docker(){
 
     ###===Current List===###
     #- Xray
-    #- Snell
     #~ Portainer
     #~ SubConverter
+    #~ livemonitor
+    #~ downloader
     #+ V2Ray
 
     ###===Issue===###
     # 1.Need --privileged/--security-opt seccomp=unconfined for some cases.
 
-    if [ "$containeropt" == "A" ] || [ "$containeropt" == "P" ];then
+    if [ "$containeropt" == "M" ];then
         # Portainer
         docker pull portainer/portainer-ce:latest
         docker volume create portainer_data
-        docker run -d --security-opt seccomp=unconfined -p 9000:9000 --name=portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v /var/lib/docker/volumes/portainer_data/:/data/ -v /usr/src/cert:/cert portainer/portainer-ce --ssl --sslcert /cert/fullchain.cer --sslkey /cert/private.key
-    fi
-    
-    if [ "$containeropt" == "A" ] || [ "$containeropt" == "S" ];then
+        docker run -d -p 9000:9000 --name=portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v /var/lib/docker/volumes/portainer_data/:/data/ -v /usr/src/cert:/cert portainer/portainer-ce --ssl --sslcert /cert/fullchain.cer --sslkey /cert/private.key
+
         # SubConverter
         docker pull tindy2013/subconverter:latest
-        docker run -d --name=subconverter --restart=always --security-opt seccomp=unconfined -p 25500:25500 tindy2013/subconverter
+        docker run -d --name=subconverter --restart=always -p 25500:25500 tindy2013/subconverter
         cat > /etc/nginx/nginx.conf <<-EOF
 user nginx;
 worker_processes auto;
@@ -230,8 +231,52 @@ http {
         }
     }    
 
+    server {
+        listen 501 ssl http2;
+        server_name  _;
+        gzip on;
+        ssl_certificate /usr/src/cert/fullchain.cer;
+        ssl_certificate_key /usr/src/cert/private.key;
+
+        location / {
+            proxy_pass http://127.0.0.1:25501/;
+            proxy_set_header  Host                \$http_host;
+            proxy_set_header  X-Real-IP           \$remote_addr;
+        }
+    } 
+
 }
 EOF
+        # livemonitor
+        docker pull bigdaddywrangler/livemonitor
+        docker volume create monitor
+        cat > /var/lib/docker/volumes/monitor/config.json <<-EOF
+{
+	"submonitor_dic": {
+        "1": {"class": "TwitterTweet", "target": "POTUS", "target_name": "Biden", "config_name": "twitter_config"}
+    },
+    "twitter_config": {
+        "interval": 60,
+        "timezone": 8,
+        "vip_dic": {
+            "POTUS": {"test": 1},
+        },
+        "word_dic": {
+        },
+        "cookies": {},
+        "proxy": {},
+        "push_list": [
+            {"type": "discord", "id": "dc webhook", "color_dic": {"test": 1}}
+        ]
+    }
+}
+EOF
+        docker run -d --network=host --name=livemonitor --restart=always -v /var/lib/docker/volumes/monitor/config.json:/usr/bin/config.json bigdaddywrangler/livemonitor:latest
+
+        # downloader
+        docker pull bigdaddywrangler/downloader
+        docker run -d --name=vps-downloader --restart=always -p 25501:25501 bigdaddywrangler/vps-downloader:latest
+        
         nginx -s reload
     fi
 
@@ -301,18 +346,7 @@ EOF
 #   }]
 # }
 # EOF
-#     docker run -d --security-opt seccomp=unconfined --network=host --name xray --restart=always -v /var/lib/docker/volumes/xray_config/:/etc/xray/ -v /usr/src/cert:/cert teddysun/xray
-    
-    #Snell
-#     docker pull primovist/snell-docker:latest
-#     docker volume create snell_config
-#     cat > /var/lib/docker/volumes/snell_config/snell-server.conf <<-EOF
-# [snell-server]
-# listen = 0.0.0.0:$snellport
-# psk = $mainpasswd
-# obfs = off
-# EOF
-#     docker run -d --security-opt seccomp=unconfined --network=host --name=snell --restart=always -v /var/lib/docker/volumes/snell_config/:/etc/snell/ primovist/snell-docker
+#     docker run -d --network=host --name xray --restart=always -v /var/lib/docker/volumes/xray_config/:/etc/xray/ -v /usr/src/cert:/cert teddysun/xray
 
     #V2fly
     docker pull v2fly/v2fly-core:latest
@@ -359,7 +393,7 @@ EOF
   }]
 }
 EOF
-    docker run -d --security-opt seccomp=unconfined --network=host --name=v2fly --restart=always -v /var/lib/docker/volumes/v2fly_config/config.json:/etc/v2ray/config.json -v /usr/src/cert:/cert v2fly/v2fly-core
+    docker run -d --network=host --name=v2fly --restart=always -v /var/lib/docker/volumes/v2fly_config/config.json:/etc/v2ray/config.json -v /usr/src/cert:/cert v2fly/v2fly-core
 
     if [ "$mode" == "0" ];then
         start_menu 2        
@@ -471,7 +505,6 @@ start_menu(){
         yteal " Trojan fallback port:" $fallbackport
         yteal " Shadowsocks listen port:" $ssport
         yteal " Shadowsocks encryption:" "chacha20-ietf-1305"
-        # yteal " Snell listen port:" $snellport
         green "=============================================="
     elif [ "$1" == "3" ];then
         green "======================================================="
@@ -570,7 +603,6 @@ if [ $# -ne 0 ];then
             esac
     done
 fi
-# && [ "$snellport" != "NULL" ]
 if [ "$mainpasswd" != "NULL" ] && [ "$fallbackport" != "NULL" ] && [ "$ssport" != "NULL" ] && [ "$sshport" != "NULL" ] && [ "$newusername" != "NULL" ] && [ "$adminpasswd" != "NULL" ];then
     clear
     green "============================================================"
@@ -581,7 +613,6 @@ if [ "$mainpasswd" != "NULL" ] && [ "$fallbackport" != "NULL" ] && [ "$ssport" !
     yteal " Trojan fallback port:" $fallbackport
     yteal " Shadowsocks listen port:" $ssport
     yteal " Shadowsocks encryption:" "chacha20-ietf-1305"
-    # yteal " Snell listen port:" $snellport
     yteal " SSH port will be changed to:" $sshport
     yteal " Username of admin account:" $newusername
     yteal " Password of admin account:" $adminpasswd
@@ -607,7 +638,6 @@ if [ "$mainpasswd" != "NULL" ] && [ "$fallbackport" != "NULL" ] && [ "$ssport" !
             yteal " Trojan fallback port:" $fallbackport
             yteal " Shadowsocks listen port:" $ssport
             yteal " Shadowsocks encryption:" "chacha20-ietf-1305"
-            # yteal " Snell listen port:" $snellport
             yteal " SSH port has been changed to:" $sshport
             yteal " Username of admin account:" $newusername
             yteal " Password of admin account:" $adminpasswd
