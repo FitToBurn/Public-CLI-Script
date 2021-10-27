@@ -13,7 +13,7 @@ export CF_Key="[CF Global API Key]"
 cd /usr/local/share/acme.sh
 export CERT_DOMAIN="*.example.com"
 export CERT_DNS="dns_cf"
-./acme.sh --issue --home . -d "$CERT_DOMAIN" --dns "$CERT_DNS"
+./acme.sh --issue --home . -d "$CERT_DOMAIN" --dns "$CERT_DNS" --force
 cd /usr/local/share/acme.sh
 export SYNO_Username='[Synology Username]'
 export SYNO_Password='[Password]'
@@ -26,5 +26,7 @@ cp -f /usr/local/share/acme.sh//"*.example.com"/"fullchain.cer" /path/to/savefol
 cp -f /usr/local/share/acme.sh//"*.example.com"/"*.example.com.key" /path/to/savefolder/
 cd /path/to/savefolder/
 mv "*.example.com.key" privkey.key
-
 synoservice -restart pkgctl-Docker
+
+# auto renew
+# sh /path/to/script.sh >> /path/to/log.txt 2>&1
