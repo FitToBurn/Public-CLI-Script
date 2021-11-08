@@ -111,7 +111,6 @@ install_docker(){
     systemctl enable containerd
 
     ###===Current List===###
-    #- Xray
     #~ Portainer
     #~ SubConverter
     #~ livemonitor
@@ -241,74 +240,6 @@ EOF
         
         nginx -s reload
     fi
-
-    # Xray
-#     docker pull teddysun/xray:latest
-#     docker volume create xray_config
-#     cat > /var/lib/docker/volumes/xray_config/config.json <<-EOF
-# {
-#   "log": {
-#     "loglevel": "warning"
-#   },
-#   "inbounds": [
-#     {
-#       "port": 443, 
-#       "protocol": "vless",
-#       "settings": {
-#         "clients":[{
-#                     "id": "[UUID]",//SetUUID, better to generate one in the script
-#                     "flow": "xtls-rprx-direct"
-#                 }],
-#         "decryption": "none",
-#         "fallbacks": [{
-#                     "dest": 444,
-#                     "xver": 1
-#                 }]
-#       },
-#       "streamSettings": {
-#         "network": "tcp",
-#         "security": "xtls",
-#         "xtlsSettings": {
-#           "alpn": ["http/1.1"],
-#           "certificates": [{
-#             "certificateFile": "/cert/fullchain.cer",
-#             "keyFile": "/cert/private.key"
-#           }]
-#         }
-#       }
-#     },
-#     {
-#         "port": 444,
-#         "listen": "127.0.0.1",
-#         "protocol": "trojan",
-#         "settings": {
-#             "clients": [{"password": "$mainpasswd"}],
-#             "fallbacks": [{"dest": $fallbackport}]
-#         },
-#         "streamSettings": {
-#             "network": "tcp",
-#             "security": "none",
-#             "tcpSettings": {
-#                 "acceptProxyProtocol": true
-#             }
-#         }
-#     },
-#     {
-#       "port": $ssport, 
-#       "protocol": "shadowsocks",
-#       "settings":{
-#           "method": "chacha20-ietf-poly1305",
-#           "ota": false, 
-#           "password": "$mainpasswd"
-#       }
-#     }
-#   ],
-#   "outbounds": [{ 
-#     "protocol": "freedom"
-#   }]
-# }
-# EOF
-#     docker run -d --network=host --name xray --restart=always -v /var/lib/docker/volumes/xray_config/:/etc/xray/ -v /usr/src/cert:/cert teddysun/xray
 
     #V2fly
     docker pull v2fly/v2fly-core:latest
