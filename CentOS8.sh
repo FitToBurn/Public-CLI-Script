@@ -425,11 +425,11 @@ EOF
         arrtemp=(`echo ${arr[$i]} | tr ',' ' '`)
         head -c -1 << EOF | cat >> /var/lib/docker/volumes/downloader/nodes.json
             {
+                "name":"${arrtemp[4]}",
                 "protocol":"${arrtemp[0]}",
                 "server":"${arrtemp[1]}",
                 "port":${arrtemp[2]},
-                "password":"${arrtemp[3]}",
-                "name":"${arrtemp[4]}"
+                "password":"${arrtemp[3]}"
             }
 EOF
         if [ "$i" != "$((${#arr[@]}-1))" ];then
