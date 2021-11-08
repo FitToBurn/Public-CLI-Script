@@ -606,11 +606,19 @@ elif [ "$mode" == "UpdateCert" ];then
     fi
 elif [ "$mode" == "UpdateSub" ];then
     clear
-    if [ "$nodes" == "NULL" ];then
+    if [ "$nodes" == "NULL" ] || [ "$keypair" == "NULL" ] || [ "$rules" == "NULL" ];then
         red "Invalid option.";
         exit 1
     fi
-    generate_json "nodes"
+    if [ "$nodes" != "NULL" ];then
+        generate_json "nodes"
+    fi
+    if [ "$keypair" != "NULL" ];then
+        generate_json "keypair"
+    fi
+    if [ "$rules" != "NULL" ];then
+        generate_json "rules"
+    fi
     green "==================================================="
     yteal " " "Subscription info has been successfully Updated."
     green "==================================================="
