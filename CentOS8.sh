@@ -19,7 +19,6 @@ enter_promote(){
 # Todo
 # 1.优化防火墙 仅block http口
 # 2.acme.sh 使用Zerossl优化
-# 3.Cert 结束后 先检测是否有docker.service再决定要不要restart
 
 initialize(){
     
@@ -78,6 +77,8 @@ cert(){
         systemctl restart nginx.service
         #申请https证书 acme.sh default由Let's Encrypt 改为 Zerossl
         mkdir /usr/src/cert
+        rm -f /usr/src/cert/private.key
+        rm -f /usr/src/cert/fullchain.cer
         curl https://get.acme.sh | sh
         ~/.acme.sh/acme.sh  --set-default-ca --server letsencrypt
         ~/.acme.sh/acme.sh  --issue  -d $your_domain  --webroot /usr/share/nginx/html/
@@ -86,11 +87,6 @@ cert(){
             --fullchain-file /usr/src/cert/fullchain.cer \
             --reloadcmd  "systemctl force-reload  nginx.service"
         if test -s /usr/src/cert/fullchain.cer; then
-            #Restart docker
-            systemctl restart docker
-            if [ "$mode" == "0" ];then
-                start_menu 1
-            fi
             return 0
         else
             red "=================================="
@@ -105,39 +101,6 @@ cert(){
         red "======================="
         return 1
     fi
-}
-
-protocol_config(){
-    randompasswd=$(cat /dev/urandom | head -1 | md5sum | head -c 12)
-    randomssport=$(shuf -i 10000-14999 -n 1)
-    # randomsnellport=$(shuf -i 15000-19999 -n 1)
-
-    green "========================================================"
-    echo
-    yellow " Enter the PASSWORD for Trojan, Shadowsocks:"
-    yteal " ==Default==:" "${randompasswd}"
-    enter_promote " Your choice:"
-    read mainpasswd
-    [ -z "${mainpasswd}" ] && mainpasswd=${randompasswd}
-    echo
-
-    yellow " Enter the fallback port for Trojan [1-65535]:"
-    yteal " ==Default==:" "80"
-    enter_promote " Your choice:"
-    read fallbackport
-    [ -z "${fallbackport}" ] && fallbackport="80"
-    echo
-
-    yellow " Enter the port for Shadowsocks [1-65535]:"
-    yteal " ==Default==:" "${randomssport}"
-    enter_promote " Your choice:"
-    read ssport
-    [ -z "${ssport}" ] && ssport=${randomssport}
-    echo
-
-    green "========================================================"
-    echo
-
 }
 
 install_docker(){
@@ -155,7 +118,7 @@ install_docker(){
     #~ downloader
     #+ V2Ray
 
-    if [ "$containeropt" == "M" ];then
+    if [ "$mode" == "MainServerInitialization" ];then
         # Portainer
         docker pull portainer/portainer-ce:latest
         docker volume create portainer_data
@@ -270,7 +233,11 @@ EOF
 
         # downloader
         docker pull bigdaddywrangler/downloader
-        docker run -d --name=vps-downloader --restart=always -p 25501:25501 bigdaddywrangler/downloader:latest
+        docker volume create downloader
+        generate_json "nodes"
+        generate_json "keypair"
+        generate_json "rules"
+        docker run -d --name=downloader --restart=always -v /var/lib/docker/volumes/downloader/nodes.json:/usr/bin/nodes.json -v /var/lib/docker/volumes/downloader/keypair.json:/usr/bin/keypair.json -v /var/lib/docker/volumes/downloader/rules.json:/usr/bin/rules.json -p 25501:25501 bigdaddywrangler/downloader:latest
         
         nginx -s reload
     fi
@@ -389,43 +356,7 @@ EOF
 }
 EOF
     docker run -d --network=host --name=v2fly --restart=always -v /var/lib/docker/volumes/v2fly_config/config.json:/etc/v2ray/config.json -v /usr/src/cert:/cert v2fly/v2fly-core
-
-    if [ "$mode" == "0" ];then
-        start_menu 2        
-    fi
     
-}
-
-ssh_update_config(){
-
-    randomsshport=$(shuf -i 20000-29999 -n 1)
-    randomadminpasswd=$(cat /dev/urandom | head -1 | md5sum | head -c 16)
-
-    green "============================================="
-    echo
-    yellow " Enter a new SSH port [1-65535]:"
-    yteal " ==Default==:" "${randomsshport}"
-    enter_promote " Your choice:"
-    read sshport
-    [ -z "${sshport}" ] && sshport=${randomsshport}
-    echo
-
-    yellow " Enter a USERNAME for new admin account:"
-    yteal " ==Default==:" "TempAdmin"
-    enter_promote " Your choice:"
-    read newusername
-    [ -z "${newusername}" ] && newusername="TempAdmin"
-    echo
-
-    yellow " Enter a PASSWORD for ${newusername}:"
-    yteal " ==Default==:" "${randomadminpasswd}"
-    enter_promote " Your choice:"
-    read adminpasswd
-    [ -z "${adminpasswd}" ] && adminpasswd=${randomadminpasswd}
-    echo
-    green "============================================="
-    echo
-
 }
 
 ssh_update(){
@@ -478,89 +409,92 @@ EOF
   semanage port -a -t ssh_port_t -p tcp ${sshport}
   semanage port -l | grep ssh
   systemctl restart sshd
-
-  if [ "$mode" == "0" ];then
-    start_menu 3          
-  fi
   
 }
 
-start_menu(){
-    clear
-    if [ "$1" == "1" ];then
-        green "=================================================="
-        yteal " " "SSL Certificate has been successfully installed."
-        green "=================================================="
-    elif [ "$1" == "2" ];then
-        green "=============================================="
-        yteal " " "Successfully installed Docker."
-        yteal " VPS IPv4:" $(curl -s ipv4.icanhazip.com)
-        yteal " Protocol password:" $mainpasswd
-        yteal " Trojan listen port:" "443"
-        yteal " Trojan fallback port:" $fallbackport
-        yteal " Shadowsocks listen port:" $ssport
-        yteal " Shadowsocks encryption:" "chacha20-ietf-1305"
-        green "=============================================="
-    elif [ "$1" == "3" ];then
-        green "======================================================="
-        yteal " " "VPS security settings have been successfully updated."
-        yellow " Root login has been disabled."
-        yteal " SSH port has changed to:" $sshport
-        yteal " Username of admin account:" $newusername
-        yteal " Password of admin account:" $adminpasswd
-        green "======================================================="
-    else
-        green "========================================="
-        yteal "       System Requirement: " "CentOS8"
-        green "========================================="
-    fi
-    echo
-    green "  1. Install/Renew SSL Certificate"
-    green "  2. Install Docker and Trojan/SS"
-    yellow "  3. VPS Security Settings Update"
-    red "  0. Exit Script"
-    echo
-    enter_promote " Enter a number:"
-    read num
-    echo
-    case "$num" in
-    1)
-    cert
-    ;;
-    2)
-    protocol_config
-    install_docker
-    ;;
-    3)
-    ssh_update_config
-    ssh_update
-    ;;
-    0)
-    exit 1
-    ;;
-    *)
-    clear
-    red "[Error] Please enter a valid number"
-    sleep 1s
-    start_menu
-    ;;
-    esac
+generate_json(){
+if [ "$1" == "nodes" ];then
+    arr=(`echo $nodes | tr ';' ' '`)
+    cat > /var/lib/docker/volumes/downloader/nodes.json << EOF
+    {
+        "nodes":[
+EOF
+    
+    for ((i=0;i<${#arr[@]};i++))
+    do
+        arrtemp=(`echo ${arr[$i]} | tr ',' ' '`)
+        head -c -1 << EOF | cat >> /var/lib/docker/volumes/downloader/nodes.json
+            {
+                "protocol":"${arrtemp[0]}",
+                "server":"${arrtemp[1]}",
+                "port":${arrtemp[2]},
+                "password":"${arrtemp[3]}",
+                "name":"${arrtemp[4]}"
+            }
+EOF
+        if [ "$i" != "$((${#arr[@]}-1))" ];then
+            echo "," | cat >> /var/lib/docker/volumes/downloader/nodes.json
+        fi
+    done
+    
+    cat >> /var/lib/docker/volumes/downloader/nodes.json << EOF
+    
+        ]
+    }
+EOF
+
+else if [ "$1" == "rules" ];then
+    arr=(`echo $rules | tr ';' ' '`)
+    cat > /var/lib/docker/volumes/downloader/rules.json << EOF
+    {
+        "rules":[
+EOF
+    
+    for ((i=0;i<${#arr[@]};i++))
+    do
+        head -c -1 << EOF | cat >> /var/lib/docker/volumes/downloader/rules.json
+        "${arrtemp[$i]}"
+EOF
+        if [ "$i" != "$((${#arr[@]}-1))" ];then
+            echo "," | cat >> /var/lib/docker/volumes/downloader/rules.json
+        fi
+    done
+    
+    cat >> /var/lib/docker/volumes/downloader/rules.json << EOF
+    
+        ]
+    }
+EOF
+
+else if [ "$1" == "keypair" ];then
+    arr=(`echo $keypair | tr ';' ' '`)
+    cat > /var/lib/docker/volumes/downloader/keypair.json << EOF
+    {
+        "keys":["${arr[0]}","${arr[1]}"]
+    }
+EOF
+
+fi
 }
+
+
 
 [[ $EUID -ne 0 ]] && red "[Error] This script must be run as root!" && exit 1
 
 mainpasswd="NULL"
 fallbackport="NULL"
 ssport="NULL"
-# snellport="NULL"
 sshport="NULL"
 newusername="NULL"
 adminpasswd="NULL"
-containeropt="NULL"
-mode=0
+
+mode="NULL"
+nodes="NULL"
+keypair="NULL"
+rules="NULL"
 
 if [ $# -ne 0 ];then
-    TEMP=`getopt -o "" -l protocol-passwd:,fallback-port:,ss-port:,ssh-port:,new-username:,admin-passwd:,container-opt: -- "$@"`
+    TEMP=`getopt -o "" -l protocol-passwd:,fallback-port:,ss-port:,ssh-port:,new-username:,admin-passwd:,mode-opt:,nodes:,keypair:,rules:, -- "$@"`
     eval set -- $TEMP
     while true ; do
             case "$1" in
@@ -582,8 +516,17 @@ if [ $# -ne 0 ];then
                     --admin-passwd) 
                         adminpasswd=$2;
                         shift 2;;
-                    --container-opt) 
-                        containeropt=$2;
+                    --mode-opt) 
+                        mode=$2;
+                        shift 2;;
+                    --nodes) 
+                        nodes=$2;
+                        shift 2;;
+                    --keypair) 
+                        keypair=$2;
+                        shift 2;;
+                    --rules) 
+                        rules=$2;
                         shift 2;;
                     --) 
                         shift ; 
@@ -594,8 +537,18 @@ if [ $# -ne 0 ];then
             esac
     done
 fi
-if [ "$mainpasswd" != "NULL" ] && [ "$fallbackport" != "NULL" ] && [ "$ssport" != "NULL" ] && [ "$sshport" != "NULL" ] && [ "$newusername" != "NULL" ] && [ "$adminpasswd" != "NULL" ];then
+if [ "$mode" == "MainServerInitialization" ] || [ "$mode" == "ServerInitialization" ];then
     clear
+    if [ "$mainpasswd" == "NULL" ] || [ "$fallbackport" == "NULL" ] || [ "$ssport" == "NULL" ] || [ "$sshport" == "NULL" ] || [ "$newusername" == "NULL" ] || [ "$adminpasswd" == "NULL" ];then
+        red "Invalid option.";
+        exit 1
+    else if [ "$mode" == "MainServerInitialization" ];then
+        yellow " Main Server"
+        if [ "$nodes" == "NULL" ] || [ "$keypair" == "NULL" ] || [ "$rules" == "NULL" ];then
+            red "Invalid option.";
+            exit 1
+        fi
+    fi
     green "============================================================"
     yellow " Please confirm your VPS configuration:"
     yteal " VPS IPv4:" $(curl -s ipv4.icanhazip.com)
@@ -612,7 +565,6 @@ if [ "$mainpasswd" != "NULL" ] && [ "$fallbackport" != "NULL" ] && [ "$ssport" !
     enter_promote " Confirm(y/n):"
     read confirmation
     if [ "$confirmation" == "y" ] || [ "$confirmation" == "Y" ];then
-        mode=1
         echo
         initialize
         cert
@@ -641,7 +593,25 @@ if [ "$mainpasswd" != "NULL" ] && [ "$fallbackport" != "NULL" ] && [ "$ssport" !
         echo
         exit 0
     fi
-else
-    initialize
-    start_menu
+else if [ "$mode" == "UpdateCert" ];then
+    clear
+    cert
+    if [ "$?" != "1" ];then
+        systemctl restart docker
+        green "=================================================="
+        yteal " " "SSL Certificate has been successfully Updated."
+        green "=================================================="
+    else
+        exit 0
+else if [ "$mode" == "UpdateSub" ];then
+    clear
+    if [ "$nodes" == "NULL" ];then
+        red "Invalid option.";
+        exit 1
+    fi
+    generate_json "nodes"
+    green "==================================================="
+    yteal " " "Subscription info has been successfully Updated."
+    green "==================================================="
+    exit 0
 fi
