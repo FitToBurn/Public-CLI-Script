@@ -384,7 +384,7 @@ EOF
     for ((i=0;i<${#arr[@]};i++))
     do
         head -c -1 << EOF | cat >> /var/lib/docker/volumes/downloader/rules.json
-        "${arrtemp[$i]}"
+            "${arr[$i]}"
 EOF
         if [ "$i" != "$((${#arr[@]}-1))" ];then
             echo "," | cat >> /var/lib/docker/volumes/downloader/rules.json
