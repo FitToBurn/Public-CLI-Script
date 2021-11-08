@@ -603,6 +603,7 @@ elif [ "$mode" == "UpdateCert" ];then
         green "=================================================="
     else
         exit 0
+    fi
 elif [ "$mode" == "UpdateSub" ];then
     clear
     if [ "$nodes" == "NULL" ];then
