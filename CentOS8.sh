@@ -443,7 +443,7 @@ EOF
     }
 EOF
 
-else if [ "$1" == "rules" ];then
+elif [ "$1" == "rules" ];then
     arr=(`echo $rules | tr ';' ' '`)
     cat > /var/lib/docker/volumes/downloader/rules.json << EOF
     {
@@ -466,7 +466,7 @@ EOF
     }
 EOF
 
-else if [ "$1" == "keypair" ];then
+elif [ "$1" == "keypair" ];then
     arr=(`echo $keypair | tr ';' ' '`)
     cat > /var/lib/docker/volumes/downloader/keypair.json << EOF
     {
@@ -542,7 +542,7 @@ if [ "$mode" == "MainServerInitialization" ] || [ "$mode" == "ServerInitializati
     if [ "$mainpasswd" == "NULL" ] || [ "$fallbackport" == "NULL" ] || [ "$ssport" == "NULL" ] || [ "$sshport" == "NULL" ] || [ "$newusername" == "NULL" ] || [ "$adminpasswd" == "NULL" ];then
         red "Invalid option.";
         exit 1
-    else if [ "$mode" == "MainServerInitialization" ];then
+    elif [ "$mode" == "MainServerInitialization" ];then
         yellow " Main Server"
         if [ "$nodes" == "NULL" ] || [ "$keypair" == "NULL" ] || [ "$rules" == "NULL" ];then
             red "Invalid option.";
@@ -593,7 +593,7 @@ if [ "$mode" == "MainServerInitialization" ] || [ "$mode" == "ServerInitializati
         echo
         exit 0
     fi
-else if [ "$mode" == "UpdateCert" ];then
+elif [ "$mode" == "UpdateCert" ];then
     clear
     cert
     if [ "$?" != "1" ];then
@@ -603,7 +603,7 @@ else if [ "$mode" == "UpdateCert" ];then
         green "=================================================="
     else
         exit 0
-else if [ "$mode" == "UpdateSub" ];then
+elif [ "$mode" == "UpdateSub" ];then
     clear
     if [ "$nodes" == "NULL" ];then
         red "Invalid option.";
