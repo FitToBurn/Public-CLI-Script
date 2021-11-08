@@ -606,7 +606,7 @@ elif [ "$mode" == "UpdateCert" ];then
     fi
 elif [ "$mode" == "UpdateSub" ];then
     clear
-    if [ "$nodes" == "NULL" ] || [ "$keypair" == "NULL" ] || [ "$rules" == "NULL" ];then
+    if [ "$nodes" == "NULL" ] && [ "$keypair" == "NULL" ] && [ "$rules" == "NULL" ];then
         red "Invalid option.";
         exit 1
     fi
