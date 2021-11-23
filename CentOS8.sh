@@ -236,6 +236,7 @@ EOF
         generate_json "nodes"
         generate_json "keypair"
         generate_json "rules"
+        generate_json "pubnodes"
         docker run -d --name=downloader --restart=always -v /var/lib/docker/volumes/downloader/nodes.json:/usr/bin/nodes.json -v /var/lib/docker/volumes/downloader/keypair.json:/usr/bin/keypair.json -v /var/lib/docker/volumes/downloader/rules.json:/usr/bin/rules.json -p 25501:25501 bigdaddywrangler/downloader:latest
         
         nginx -s reload
@@ -244,7 +245,7 @@ EOF
     #V2fly
     docker pull v2fly/v2fly-core:latest
     docker volume create v2fly_config
-	  cat > /var/lib/docker/volumes/v2fly_config/config.json <<-EOF
+	head -c -1 << EOF | cat > /var/lib/docker/volumes/v2fly_config/config.json
 {
   "log": {
     "loglevel": "warning"
@@ -280,6 +281,25 @@ EOF
           "password": "$mainpasswd"
       }
     }
+EOF
+    if [ "$pubpasswd" != "NULL" ];then
+        echo "," | cat >> /var/lib/docker/volumes/v2fly_config/config.json
+        cat >> /var/lib/docker/volumes/v2fly_config/config.json <<-EOF
+    {
+      "listen": "0.0.0.0",
+      "port": $((${ssport}+5)), 
+      "protocol": "shadowsocks",
+      "settings":{
+          "method": "chacha20-ietf-poly1305",
+          "ota": false, 
+          "password": "$pubpasswd"
+      }
+    }
+EOF
+    else
+        echo "" | cat >> /var/lib/docker/volumes/v2fly_config/config.json
+    fi
+    cat >> /var/lib/docker/volumes/v2fly_config/config.json <<-EOF
   ],
   "outbounds": [{ 
     "protocol": "freedom"
@@ -374,6 +394,36 @@ EOF
     }
 EOF
 
+elif [ "$1" == "pubnodes" ];then
+    arr=(`echo $pubnodes | tr ';' ' '`)
+    cat > /var/lib/docker/volumes/downloader/pubnodes.json << EOF
+    {
+        "nodes":[
+EOF
+    
+    for ((i=0;i<${#arr[@]};i++))
+    do
+        arrtemp=(`echo ${arr[$i]} | tr ',' ' '`)
+        head -c -1 << EOF | cat >> /var/lib/docker/volumes/downloader/pubnodes.json
+            {
+                "name":"${arrtemp[4]}",
+                "protocol":"${arrtemp[0]}",
+                "server":"${arrtemp[1]}",
+                "port":${arrtemp[2]},
+                "password":"${arrtemp[3]}"
+            }
+EOF
+        if [ "$i" != "$((${#arr[@]}-1))" ];then
+            echo "," | cat >> /var/lib/docker/volumes/downloader/pubnodes.json
+        fi
+    done
+    
+    cat >> /var/lib/docker/volumes/downloader/pubnodes.json << EOF
+    
+        ]
+    }
+EOF
+
 elif [ "$1" == "rules" ];then
     arr=(`echo $rules | tr ';' ' '`)
     cat > /var/lib/docker/volumes/downloader/rules.json << EOF
@@ -421,11 +471,13 @@ adminpasswd="NULL"
 
 mode="NULL"
 nodes="NULL"
+pubnodes="NULL"
 keypair="NULL"
 rules="NULL"
+pubpasswd="NULL"
 
 if [ $# -ne 0 ];then
-    TEMP=`getopt -o "" -l protocol-passwd:,fallback-port:,ss-port:,ssh-port:,new-username:,admin-passwd:,mode-opt:,nodes:,keypair:,rules:, -- "$@"`
+    TEMP=`getopt -o "" -l protocol-passwd:,fallback-port:,ss-port:,ssh-port:,new-username:,admin-passwd:,mode-opt:,nodes:,keypair:,rules:,pubnodes:,pubpasswd:, -- "$@"`
     eval set -- $TEMP
     while true ; do
             case "$1" in
@@ -459,6 +511,12 @@ if [ $# -ne 0 ];then
                     --rules) 
                         rules=$2;
                         shift 2;;
+                    --pubnodes) 
+                        pubnodes=$2;
+                        shift 2;;
+                    --pubpasswd) 
+                        pubpasswd=$2;
+                        shift 2;;
                     --) 
                         shift ; 
                         break ;;
@@ -475,7 +533,7 @@ if [ "$mode" == "MainServerInitialization" ] || [ "$mode" == "ServerInitializati
         exit 1
     elif [ "$mode" == "MainServerInitialization" ];then
         yellow " Main Server"
-        if [ "$nodes" == "NULL" ] || [ "$keypair" == "NULL" ] || [ "$rules" == "NULL" ];then
+        if [ "$nodes" == "NULL" ] || [ "$keypair" == "NULL" ] || [ "$rules" == "NULL" ] || [ "$pubnodes" == "NULL" ];then
             red "Invalid option.";
             exit 1
         fi
@@ -537,7 +595,7 @@ elif [ "$mode" == "UpdateCert" ];then
     fi
 elif [ "$mode" == "UpdateSub" ];then
     clear
-    if [ "$nodes" == "NULL" ] && [ "$keypair" == "NULL" ] && [ "$rules" == "NULL" ];then
+    if [ "$nodes" == "NULL" ] && [ "$keypair" == "NULL" ] && [ "$rules" == "NULL" ] && [ "$pubnodes" == "NULL" ];then
         red "Invalid option.";
         exit 1
     fi
@@ -549,6 +607,9 @@ elif [ "$mode" == "UpdateSub" ];then
     fi
     if [ "$rules" != "NULL" ];then
         generate_json "rules"
+    fi
+    if [ "$pubnodes" != "NULL" ];then
+        generate_json "pubnodes"
     fi
     green "==================================================="
     yteal " " "Subscription info has been successfully Updated."
