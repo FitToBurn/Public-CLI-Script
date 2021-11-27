@@ -17,10 +17,10 @@ export CERT_DNS="dns_cf"
 cd /usr/local/share/acme.sh
 export SYNO_Username='[Synology Username]'
 export SYNO_Password='[Password]'
-export SYNO_Scheme="https"
-export SYNO_Port="[https port]"
+export SYNO_Scheme="http"
+export SYNO_Port="[http port]"
 export SYNO_DID=[2-factor auth cookie]
-export SYNO_Certificate="[Certificate Description]"
+export SYNO_Certificate="Cert"
 ./acme.sh --insecure --deploy --home . -d "$CERT_DOMAIN" --deploy-hook synology_dsm
 cp -f /usr/local/share/acme.sh//"*.example.com"/"fullchain.cer" /path/to/savefolder/
 cp -f /usr/local/share/acme.sh//"*.example.com"/"*.example.com.key" /path/to/savefolder/
