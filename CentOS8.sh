@@ -354,7 +354,7 @@ AcceptEnv LANG LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE LC_MONETARY LC_MESSAGES
 AcceptEnv LC_PAPER LC_NAME LC_ADDRESS LC_TELEPHONE LC_MEASUREMENT
 AcceptEnv LC_IDENTIFICATION LC_ALL LANGUAGE
 AcceptEnv XMODIFIERS
-Subsystem	sftp	/usr/libexec/openssh/sftp-server
+Subsystem	sftp	sudo -n true && sudo -n /usr/libexec/openssh/sftp-server || /usr/libexec/openssh/sftp-server
 EOF
   echo y | dnf install policycoreutils-python-utils
   semanage port -a -t ssh_port_t -p tcp ${sshport}
