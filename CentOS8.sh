@@ -47,8 +47,9 @@ initialize(){
         sed -i 's/SELINUX=permissive/SELINUX=disabled/g' /etc/selinux/config
         setenforce 0
     fi
-    yum -y install bind-utils wget unzip zip curl tar
-    yum -y install libseccomp-devel
+    apt-get install -y unzip
+    #yum -y install bind-utils wget unzip zip curl tar
+    #yum -y install libseccomp-devel
 
 }
 
@@ -66,8 +67,9 @@ cert(){
         green "==============================="
         green "Domain name resolves correctly."
         green "==============================="
-        rpm -Uvh http://nginx.org/packages/centos/7/noarch/RPMS/nginx-release-centos-7-0.el7.ngx.noarch.rpm
-            yum install -y nginx
+        # rpm -Uvh http://nginx.org/packages/centos/7/noarch/RPMS/nginx-release-centos-7-0.el7.ngx.noarch.rpm
+        #     yum install -y nginx
+        apt-get install -y nginx
         systemctl enable nginx.service
         #设置伪装站
         rm -rf /usr/share/nginx/html/*
