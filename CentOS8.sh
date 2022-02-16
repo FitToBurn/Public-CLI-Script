@@ -484,6 +484,7 @@ pubnodes="NULL"
 keypair="NULL"
 rules="NULL"
 pubpasswd="NULL"
+airport="NULL"
 
 if [ $# -ne 0 ];then
     TEMP=`getopt -o "" -l protocol-passwd:,fallback-port:,ss-port:,ssh-port:,new-username:,admin-passwd:,mode-opt:,nodes:,keypair:,rules:,pubnodes:,pubpasswd:,airport:, -- "$@"`
