@@ -539,6 +539,7 @@ if [ $# -ne 0 ];then
             esac
     done
 fi
+
 if [ "$mode" == "MainServerInitialization" ] || [ "$mode" == "ServerInitialization" ];then
     clear
     if [ "$mainpasswd" == "NULL" ] || [ "$fallbackport" == "NULL" ] || [ "$ssport" == "NULL" ] || [ "$sshport" == "NULL" ] || [ "$newusername" == "NULL" ] || [ "$adminpasswd" == "NULL" ];then
@@ -595,6 +596,7 @@ if [ "$mode" == "MainServerInitialization" ] || [ "$mode" == "ServerInitializati
         echo
         exit 0
     fi
+
 elif [ "$mode" == "UpdateCert" ];then
     clear
     cert
@@ -606,6 +608,7 @@ elif [ "$mode" == "UpdateCert" ];then
     else
         exit 0
     fi
+
 elif [ "$mode" == "UpdateSub" ];then
     clear
     if [ "$nodes" == "NULL" ] && [ "$keypair" == "NULL" ] && [ "$rules" == "NULL" ] && [ "$pubnodes" == "NULL" ] && [ "$airport" == "NULL" ];then
