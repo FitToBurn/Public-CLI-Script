@@ -236,7 +236,7 @@ EOF
         generate_json "rules"
         generate_json "pubnodes"
         generate_json "airport"
-        docker run -d --name=downloader --restart=always -v /var/lib/docker/volumes/downloader/nodes.json:/usr/bin/nodes.json -v /var/lib/docker/volumes/downloader/keypair.json:/usr/bin/keypair.json -v /var/lib/docker/volumes/downloader/rules.json:/usr/bin/rules.json -v /var/lib/docker/volumes/downloader/pubnodes.json:/usr/bin/pubnodes.json -p 25501:25501 bigdaddywrangler/downloader:latest
+        docker run -d --name=downloader --restart=always -v /var/lib/docker/volumes/downloader/nodes.json:/usr/bin/nodes.json -v /var/lib/docker/volumes/downloader/keypair.json:/usr/bin/keypair.json -v /var/lib/docker/volumes/downloader/rules.json:/usr/bin/rules.json -v /var/lib/docker/volumes/downloader/pubnodes.json:/usr/bin/pubnodes.json -v /var/lib/docker/volumes/downloader/airport.json:/usr/bin/airport.json -p 25501:25501 bigdaddywrangler/downloader:latest
         
         nginx -s reload
     fi
