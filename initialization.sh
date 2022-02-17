@@ -310,9 +310,6 @@ EOF
 }
 
 ssh_update(){
-#   adduser ${newusername}
-#   echo ${adminpasswd} | passwd ${newusername} --stdin
-
   useradd -m ${newusername}
   chpasswd <<< "${newusername}:${adminpasswd}"
 
