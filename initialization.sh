@@ -65,6 +65,8 @@ cert(){
         wget https://github.com/atrandys/v2ray-ws-tls/raw/master/web.zip
             unzip web.zip
         systemctl restart nginx.service
+        if test -s /usr/src/cert/fullchain.cer; then
+            return 0
         #申请https证书 acme.sh default由Let's Encrypt 改为 Zerossl
         mkdir /usr/src/cert
         rm -f /usr/src/cert/private.key
