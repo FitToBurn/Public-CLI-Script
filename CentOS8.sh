@@ -47,9 +47,8 @@ initialize(){
         sed -i 's/SELINUX=permissive/SELINUX=disabled/g' /etc/selinux/config
         setenforce 0
     fi
-    apt-get install -y unzip
-    #yum -y install bind-utils wget unzip zip curl tar
-    #yum -y install libseccomp-devel
+    apt-get install -y unzip zip curl tar
+    #apt-get install -y libseccomp-devel
 
 }
 
@@ -314,8 +313,9 @@ EOF
 }
 
 ssh_update(){
-  adduser ${newusername}
-  echo ${adminpasswd} | passwd ${newusername} --stdin
+#   adduser ${newusername}
+#   echo ${adminpasswd} | passwd ${newusername} --stdin
+  useradd -p ${adminpasswd} ${newusername}
   chmod 777 /etc/sudoers
   cat > /etc/sudoers <<-EOF
 Defaults   !visiblepw
