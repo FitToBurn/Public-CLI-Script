@@ -70,7 +70,7 @@ cert(){
         rm -f /usr/src/cert/private.key
         rm -f /usr/src/cert/fullchain.cer
         curl https://get.acme.sh | sh
-        # ~/.acme.sh/acme.sh  --set-default-ca --server letsencrypt
+        ~/.acme.sh/acme.sh  --set-default-ca --server letsencrypt
         ~/.acme.sh/acme.sh  --issue  -d $your_domain  --webroot /var/www/html/
         ~/.acme.sh/acme.sh  --installcert  -d  $your_domain   \
             --key-file   /usr/src/cert/private.key \
