@@ -67,6 +67,7 @@ cert(){
         systemctl restart nginx.service
         if test -s /usr/src/cert/fullchain.cer; then
             return 0
+        fi
         #申请https证书 acme.sh default由Let's Encrypt 改为 Zerossl
         mkdir /usr/src/cert
         rm -f /usr/src/cert/private.key
