@@ -35,9 +35,7 @@ initialize(){
         yellow "BBR is already enabled."
     fi
 
-    #关闭防火墙和SELINUX
-    systemctl stop firewalld
-    systemctl disable firewalld
+    #关闭SELINUX
     CHECK=$(grep SELINUX= /etc/selinux/config | grep -v "#")
     if [ "$CHECK" == "SELINUX=enforcing" ]; then
         sed -i 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/selinux/config
@@ -47,8 +45,6 @@ initialize(){
         sed -i 's/SELINUX=permissive/SELINUX=disabled/g' /etc/selinux/config
         setenforce 0
     fi
-    apt-get install -y unzip zip curl tar
-    #apt-get install -y libseccomp-devel
 
 }
 
@@ -66,10 +62,11 @@ cert(){
         green "==============================="
         green "Domain name resolves correctly."
         green "==============================="
-        # rpm -Uvh http://nginx.org/packages/centos/7/noarch/RPMS/nginx-release-centos-7-0.el7.ngx.noarch.rpm
-        #     yum install -y nginx
-        apt-get install -y nginx
+
+        apt-get install -y unzip zip curl tar nginx
+        #apt-get install -y libseccomp-devel
         systemctl enable nginx.service
+
         #设置伪装站
         rm -rf /var/www/html/*
         cd /var/www/html/
@@ -357,9 +354,9 @@ AcceptEnv LANG LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE LC_MONETARY LC_MESSAGES
 AcceptEnv LC_PAPER LC_NAME LC_ADDRESS LC_TELEPHONE LC_MEASUREMENT
 AcceptEnv LC_IDENTIFICATION LC_ALL LANGUAGE
 AcceptEnv XMODIFIERS
-Subsystem	sftp	sudo -n true && sudo -n /usr/libexec/openssh/sftp-server || /usr/libexec/openssh/sftp-server
+Subsystem	sftp	sudo -n true && sudo -n /usr/lib/openssh/sftp-server || /usr/lib/openssh/sftp-server
 EOF
-  echo y | dnf install policycoreutils-python-utils
+  echo y | apt install policycoreutils-python-utils
   semanage port -a -t ssh_port_t -p tcp ${sshport}
   semanage port -l | grep ssh
   systemctl restart sshd
