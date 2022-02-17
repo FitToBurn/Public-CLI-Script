@@ -312,7 +312,10 @@ EOF
 ssh_update(){
 #   adduser ${newusername}
 #   echo ${adminpasswd} | passwd ${newusername} --stdin
-  useradd -p ${adminpasswd} ${newusername}
+
+  useradd -m ${newusername}
+  chpasswd <<< "${newusername}:${adminpasswd}"
+
   chmod 777 /etc/sudoers
   cat > /etc/sudoers <<-EOF
 Defaults   !visiblepw
