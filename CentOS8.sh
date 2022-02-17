@@ -72,8 +72,8 @@ cert(){
         apt-get install -y nginx
         systemctl enable nginx.service
         #设置伪装站
-        rm -rf /usr/share/nginx/html/*
-        cd /usr/share/nginx/html/
+        rm -rf /var/www/html/*
+        cd /var/www/html/
         wget https://github.com/atrandys/v2ray-ws-tls/raw/master/web.zip
             unzip web.zip
         systemctl restart nginx.service
@@ -83,7 +83,7 @@ cert(){
         rm -f /usr/src/cert/fullchain.cer
         curl https://get.acme.sh | sh
         ~/.acme.sh/acme.sh  --set-default-ca --server letsencrypt
-        ~/.acme.sh/acme.sh  --issue  -d $your_domain  --webroot /usr/share/nginx/html/
+        ~/.acme.sh/acme.sh  --issue  -d $your_domain  --webroot /var/www/html/
         ~/.acme.sh/acme.sh  --installcert  -d  $your_domain   \
             --key-file   /usr/src/cert/private.key \
             --fullchain-file /usr/src/cert/fullchain.cer \
