@@ -128,7 +128,7 @@ install_docker(){
         docker pull tindy2013/subconverter:latest
         docker run -d --name=subconverter --restart=always -p 25500:25500 tindy2013/subconverter
         cat > /etc/nginx/nginx.conf <<-EOF
-user nginx;
+user nobody nogroup;
 worker_processes auto;
 error_log /var/log/nginx/error.log;
 pid /run/nginx.pid;
@@ -159,7 +159,7 @@ http {
         listen       80 default_server;
         listen       [::]:80 default_server;
         server_name  _;
-        root         /usr/share/nginx/html;
+        root         /var/www/html/;
 
         include /etc/nginx/default.d/*.conf;
 
