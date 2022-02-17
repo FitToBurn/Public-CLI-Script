@@ -35,16 +35,7 @@ initialize(){
         yellow "BBR is already enabled."
     fi
 
-    #关闭SELINUX
-    CHECK=$(grep SELINUX= /etc/selinux/config | grep -v "#")
-    if [ "$CHECK" == "SELINUX=enforcing" ]; then
-        sed -i 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/selinux/config
-        setenforce 0
-    fi
-    if [ "$CHECK" == "SELINUX=permissive" ]; then
-        sed -i 's/SELINUX=permissive/SELINUX=disabled/g' /etc/selinux/config
-        setenforce 0
-    fi
+    ufw disable
 
 }
 
