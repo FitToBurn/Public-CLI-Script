@@ -49,7 +49,8 @@ cert(){
     green "====================================="
     real_addr=`ping ${your_domain} -c 1 | sed '1{s/[^(]*(//;s/).*//;q}'`
     local_addr=`curl ipv4.icanhazip.com`
-    if [ $real_addr == $local_addr ] ; then
+    wild_card=$(echo ${your_domain} | grep '[*]') 
+    if [ $real_addr == $local_addr ] || [[ "$wild_card" != "" ]]; then
         green "==============================="
         green "Domain name resolves correctly."
         green "==============================="
