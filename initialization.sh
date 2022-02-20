@@ -16,38 +16,8 @@ enter_promote(){
     echo -ne "\033[34m\033[01m$1\033[0m"
 }
 
-# Todo
-# 1.优化防火墙 仅block http口
-# 2.acme.sh 使用Zerossl优化
-
-initialize(){
-    
-    #开启BBR加速
-    BBRCHECK=$(sysctl -n net.ipv4.tcp_congestion_control)
-    if [ "$BBRCHECK" != "bbr" ]; then
-        echo "net.core.default_qdisc=fq" >> /etc/sysctl.conf
-        echo "net.ipv4.tcp_congestion_control=bbr" >> /etc/sysctl.conf
-        sysctl -p
-        sysctl -n net.ipv4.tcp_congestion_control
-        lsmod | grep bbr
-        green "BBR enabled."
-    else
-        yellow "BBR is already enabled."
-    fi
-
-    ufw disable
-
-}
-
 cert(){
-    green "====================================="
-    echo
-    yteal "" " Enter the domain name of your VPS:"
-    enter_promote " Domain:"
-    read your_domain
-    echo
-    green "====================================="
-    real_addr=`ping ${your_domain} -c 1 | sed '1{s/[^(]*(//;s/).*//;q}'`
+    real_addr=`ping ${domain} -c 1 | sed '1{s/[^(]*(//;s/).*//;q}'`
     local_addr=`curl ipv4.icanhazip.com`
     if [ $real_addr == $local_addr ]; then
         green "==============================="
@@ -67,14 +37,14 @@ cert(){
         if test -s /usr/src/cert/fullchain.cer; then
             return 0
         fi
-        #申请https证书 acme.sh default由Let's Encrypt 改为 Zerossl
+        
         mkdir /usr/src/cert
         rm -f /usr/src/cert/private.key
         rm -f /usr/src/cert/fullchain.cer
         curl https://get.acme.sh | sh
         ~/.acme.sh/acme.sh  --set-default-ca --server letsencrypt
-        ~/.acme.sh/acme.sh  --issue  -d $your_domain  --webroot /var/www/html/
-        ~/.acme.sh/acme.sh  --installcert  -d  $your_domain   \
+        ~/.acme.sh/acme.sh  --issue  -d $domain  --webroot /var/www/html/
+        ~/.acme.sh/acme.sh  --installcert  -d  $domain   \
             --key-file   /usr/src/cert/private.key \
             --fullchain-file /usr/src/cert/fullchain.cer \
             --reloadcmd  "systemctl force-reload  nginx.service"
@@ -107,17 +77,34 @@ install_docker(){
     #~ SubConverter
     #~ livemonitor
     #~ downloader
+    #~ UnblockNeteaseMusic
     #+ V2Ray
+
 
     if [ "$mode" == "MainServerInitialization" ];then
         # Portainer
         docker pull portainer/portainer-ce:latest
         docker volume create portainer_data
-        docker run -d -p 600:9443 -p 8000:8000 --name=portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v /var/lib/docker/volumes/portainer_data/:/data/ -v /usr/src/cert:/cert portainer/portainer-ce --sslcert /cert/fullchain.cer --sslkey /cert/private.key
+
+        docker run -d \
+        -p 600:9443 -p 8000:8000 \
+        --name=portainer \
+        --restart=always \
+        -v /var/run/docker.sock:/var/run/docker.sock \
+        -v /var/lib/docker/volumes/portainer_data/:/data/ \
+        -v /usr/src/cert:/cert \
+        portainer/portainer-ce --sslcert /cert/fullchain.cer --sslkey /cert/private.key
+
 
         # SubConverter
         docker pull tindy2013/subconverter:latest
-        docker run -d --name=subconverter --restart=always -p 25500:25500 tindy2013/subconverter
+
+        docker run -d \
+        --name=subconverter \
+        --restart=always \
+        -p 25500:25500 \
+        tindy2013/subconverter
+
         cat > /etc/nginx/nginx.conf <<-EOF
 user nobody nogroup;
 worker_processes auto;
@@ -220,7 +207,12 @@ EOF
     }
 }
 EOF
-        docker run -d --network=host --name=livemonitor --restart=always -v /var/lib/docker/volumes/monitor/config.json:/usr/bin/config.json bigdaddywrangler/livemonitor:latest
+        docker run -d \
+        --network=host \
+        --name=livemonitor \
+        --restart=always \
+        -v /var/lib/docker/volumes/monitor/config.json:/usr/bin/config.json \
+        bigdaddywrangler/livemonitor:latest
 
         # downloader
         docker pull bigdaddywrangler/downloader
@@ -230,8 +222,29 @@ EOF
         generate_json "rules"
         generate_json "pubnodes"
         generate_json "airport"
-        docker run -d --name=downloader --restart=always -v /var/lib/docker/volumes/downloader/nodes.json:/usr/bin/nodes.json -v /var/lib/docker/volumes/downloader/keypair.json:/usr/bin/keypair.json -v /var/lib/docker/volumes/downloader/rules.json:/usr/bin/rules.json -v /var/lib/docker/volumes/downloader/pubnodes.json:/usr/bin/pubnodes.json -v /var/lib/docker/volumes/downloader/airport.json:/usr/bin/airport.json -p 25501:25501 bigdaddywrangler/downloader:latest
+
+        docker run -d \
+        --name=downloader \
+        --restart=always \
+        -v /var/lib/docker/volumes/downloader/nodes.json:/usr/bin/nodes.json \
+        -v /var/lib/docker/volumes/downloader/keypair.json:/usr/bin/keypair.json \
+        -v /var/lib/docker/volumes/downloader/rules.json:/usr/bin/rules.json \
+        -v /var/lib/docker/volumes/downloader/pubnodes.json:/usr/bin/pubnodes.json \
+        -v /var/lib/docker/volumes/downloader/airport.json:/usr/bin/airport.json \
+        -p 25501:25501 \
+        bigdaddywrangler/downloader:latest
         
+
+        # UnblockNeteaseMusic
+        docker pull nondanee/unblockneteasemusic
+
+        docker run -d -p $unlockport:8080 \
+        --name unlock-netease \
+        --restart always \
+        nondanee/unblockneteasemusic \
+        -s -e https://$domain -p 8080
+
+
         nginx -s reload
     fi
 
@@ -250,7 +263,7 @@ EOF
       "protocol": "trojan",
       "settings": {
         "clients":[{"password": "$mainpasswd"}],
-        "fallbacks": [{"dest": $fallbackport}]
+        "fallbacks": [{"dest": $unlockport}]
       },
       "streamSettings": {
         "network": "tcp",
@@ -299,7 +312,13 @@ EOF
   }]
 }
 EOF
-    docker run -d --network=host --name=v2fly --restart=always -v /var/lib/docker/volumes/v2fly_config/config.json:/etc/v2ray/config.json -v /usr/src/cert:/cert v2fly/v2fly-core
+    docker run -d \
+    --network=host \
+    --name=v2fly \
+    --restart=always \
+    -v /var/lib/docker/volumes/v2fly_config/config.json:/etc/v2ray/config.json \
+    -v /usr/src/cert:/cert \
+    v2fly/v2fly-core
     
 }
 
@@ -465,7 +484,7 @@ fi
 [[ $EUID -ne 0 ]] && red "[Error] This script must be run as root!" && exit 1
 
 mainpasswd="NULL"
-fallbackport="NULL"
+unlockport="NULL"
 ssport="NULL"
 sshport="NULL"
 newusername="NULL"
@@ -478,17 +497,18 @@ keypair="NULL"
 rules="NULL"
 pubpasswd="NULL"
 airport="NULL"
+domain="NULL"
 
 if [ $# -ne 0 ];then
-    TEMP=`getopt -o "" -l protocol-passwd:,fallback-port:,ss-port:,ssh-port:,new-username:,admin-passwd:,mode-opt:,nodes:,keypair:,rules:,pubnodes:,pubpasswd:,airport:, -- "$@"`
+    TEMP=`getopt -o "" -l protocol-passwd:,unlockport-port:,ss-port:,ssh-port:,new-username:,admin-passwd:,mode-opt:,nodes:,keypair:,rules:,pubnodes:,pubpasswd:,airport:,domain:, -- "$@"`
     eval set -- $TEMP
     while true ; do
             case "$1" in
                     --protocol-passwd) 
                         mainpasswd=$2;
                         shift 2;;
-                    --fallback-port) 
-                        fallbackport=$2;
+                    --unlockport-port) 
+                        unlockport=$2;
                         shift 2;;
                     --ss-port) 
                         ssport=$2;
@@ -523,6 +543,9 @@ if [ $# -ne 0 ];then
                     --airport) 
                         airport=$2;
                         shift 2;;
+                    --domain) 
+                        domain=$2;
+                        shift 2;;
                     --) 
                         shift ; 
                         break ;;
@@ -535,7 +558,7 @@ fi
 
 if [ "$mode" == "MainServerInitialization" ] || [ "$mode" == "ServerInitialization" ];then
     clear
-    if [ "$mainpasswd" == "NULL" ] || [ "$fallbackport" == "NULL" ] || [ "$ssport" == "NULL" ] || [ "$sshport" == "NULL" ] || [ "$newusername" == "NULL" ] || [ "$adminpasswd" == "NULL" ];then
+    if [ "$mainpasswd" == "NULL" ] || [ "$unlockport" == "NULL" ] || [ "$ssport" == "NULL" ] || [ "$sshport" == "NULL" ] || [ "$newusername" == "NULL" ] || [ "$adminpasswd" == "NULL" ] || [ "$domain" == "NULL" ];then
         red "Invalid option.";
         exit 1
     elif [ "$mode" == "MainServerInitialization" ];then
@@ -550,7 +573,7 @@ if [ "$mode" == "MainServerInitialization" ] || [ "$mode" == "ServerInitializati
     yteal " VPS IPv4:" $(curl -s ipv4.icanhazip.com)
     yteal " Protocol password:" $mainpasswd
     yteal " Trojan listen port:" "443"
-    yteal " Trojan fallback port:" $fallbackport
+    yteal " Netease Music Unlock Port:" $unlockport
     yteal " Shadowsocks listen port:" $ssport
     yteal " Shadowsocks encryption:" "chacha20-ietf-1305"
     yteal " SSH port will be changed to:" $sshport
@@ -562,7 +585,7 @@ if [ "$mode" == "MainServerInitialization" ] || [ "$mode" == "ServerInitializati
     read confirmation
     if [ "$confirmation" == "y" ] || [ "$confirmation" == "Y" ];then
         echo
-        initialize
+        ufw disable
         cert
         if [ "$?" != "1" ];then
             install_docker
@@ -574,7 +597,7 @@ if [ "$mode" == "MainServerInitialization" ] || [ "$mode" == "ServerInitializati
             yteal " VPS IPv4:" $(curl -s ipv4.icanhazip.com)
             yteal " Protocol password:" $mainpasswd
             yteal " Trojan listen port:" "443"
-            yteal " Trojan fallback port:" $fallbackport
+            yteal " Netease Music Unlock Port:" $unlockport
             yteal " Shadowsocks listen port:" $ssport
             yteal " Shadowsocks encryption:" "chacha20-ietf-1305"
             yteal " SSH port has been changed to:" $sshport
