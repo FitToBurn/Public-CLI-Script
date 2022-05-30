@@ -235,15 +235,6 @@ EOF
         bigdaddywrangler/downloader:latest
         
 
-        # UnblockNeteaseMusic
-        docker pull nondanee/unblockneteasemusic
-
-        docker run -d -p $unlockport:8080 \
-        --name unlock-netease \
-        --restart always \
-        nondanee/unblockneteasemusic \
-        -s -e https://$domain -p 8080
-
 
         nginx -s reload
     fi
@@ -573,7 +564,7 @@ if [ "$mode" == "MainServerInitialization" ] || [ "$mode" == "ServerInitializati
     yteal " VPS IPv4:" $(curl -s ipv4.icanhazip.com)
     yteal " Protocol password:" $mainpasswd
     yteal " Trojan listen port:" "443"
-    yteal " Netease Music Unlock Port:" $unlockport
+    yteal " Trojan fallback port:" $unlockport
     yteal " Shadowsocks listen port:" $ssport
     yteal " Shadowsocks encryption:" "chacha20-ietf-1305"
     yteal " SSH port will be changed to:" $sshport
@@ -597,7 +588,7 @@ if [ "$mode" == "MainServerInitialization" ] || [ "$mode" == "ServerInitializati
             yteal " VPS IPv4:" $(curl -s ipv4.icanhazip.com)
             yteal " Protocol password:" $mainpasswd
             yteal " Trojan listen port:" "443"
-            yteal " Netease Music Unlock Port:" $unlockport
+            yteal " Trojan fallback port:" $unlockport
             yteal " Shadowsocks listen port:" $ssport
             yteal " Shadowsocks encryption:" "chacha20-ietf-1305"
             yteal " SSH port has been changed to:" $sshport
