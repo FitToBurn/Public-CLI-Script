@@ -182,36 +182,36 @@ http {
 }
 EOF
 
-    # livemonitor
-    docker pull bigdaddywrangler/livemonitor
-    docker volume create monitor
-    cat > /var/lib/docker/volumes/monitor/config.json <<-EOF
-{
-	"submonitor_dic": {
-        "1": {"class": "TwitterTweet", "target": "POTUS", "target_name": "Biden", "config_name": "twitter_config"}
-    },
-    "twitter_config": {
-        "interval": 60,
-        "timezone": 8,
-        "vip_dic": {
-            "POTUS": {"test": 1},
-        },
-        "word_dic": {
-        },
-        "cookies": {},
-        "proxy": {},
-        "push_list": [
-            {"type": "discord", "id": "dc webhook", "color_dic": {"test": 1}}
-        ]
-    }
-}
-EOF
-    docker run -d \
-    --network=host \
-    --name=livemonitor \
-    --restart=always \
-    -v /var/lib/docker/volumes/monitor/config.json:/usr/bin/config.json \
-    bigdaddywrangler/livemonitor:latest
+#     # livemonitor
+#     docker pull bigdaddywrangler/livemonitor
+#     docker volume create monitor
+#     cat > /var/lib/docker/volumes/monitor/config.json <<-EOF
+# {
+# 	"submonitor_dic": {
+#         "1": {"class": "TwitterTweet", "target": "POTUS", "target_name": "Biden", "config_name": "twitter_config"}
+#     },
+#     "twitter_config": {
+#         "interval": 60,
+#         "timezone": 8,
+#         "vip_dic": {
+#             "POTUS": {"test": 1},
+#         },
+#         "word_dic": {
+#         },
+#         "cookies": {},
+#         "proxy": {},
+#         "push_list": [
+#             {"type": "discord", "id": "dc webhook", "color_dic": {"test": 1}}
+#         ]
+#     }
+# }
+# EOF
+#     docker run -d \
+#     --network=host \
+#     --name=livemonitor \
+#     --restart=always \
+#     -v /var/lib/docker/volumes/monitor/config.json:/usr/bin/config.json \
+#     bigdaddywrangler/livemonitor:latest
 
     # downloader
     docker pull bigdaddywrangler/downloader
@@ -274,9 +274,6 @@ EOF
           "password": "$mainpasswd"
       }
     }
-EOF
-    echo "" | cat >> /var/lib/docker/volumes/v2fly_config/config.json
-    cat >> /var/lib/docker/volumes/v2fly_config/config.json <<-EOF
   ],
   "outbounds": [{ 
     "protocol": "freedom"
@@ -289,7 +286,8 @@ EOF
     --restart=always \
     -v /var/lib/docker/volumes/v2fly_config/config.json:/etc/v2ray/config.json \
     -v /usr/src/cert:/cert \
-    v2fly/v2fly-core
+    v2fly/v2fly-core \
+    run -c /etc/v2ray/config.json
     
 }
 
