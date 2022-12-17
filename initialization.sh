@@ -75,37 +75,35 @@ install_docker(){
     ###===Current List===###
     #~ Portainer
     #~ SubConverter
-    #~ livemonitor
+    #x livemonitor
     #~ downloader
-    #~ UnblockNeteaseMusic
     #+ V2Ray
 
 
-    if [ "$mode" == "MainServerInitialization" ];then
-        # Portainer
-        docker pull portainer/portainer-ce:latest
-        docker volume create portainer_data
+    # Portainer
+    docker pull portainer/portainer-ce:latest
+    docker volume create portainer_data
 
-        docker run -d \
-        -p 600:9443 -p 8000:8000 \
-        --name=portainer \
-        --restart=always \
-        -v /var/run/docker.sock:/var/run/docker.sock \
-        -v /var/lib/docker/volumes/portainer_data/:/data/ \
-        -v /usr/src/cert:/cert \
-        portainer/portainer-ce --sslcert /cert/fullchain.cer --sslkey /cert/private.key
+    docker run -d \
+    -p 600:9443 -p 8000:8000 \
+    --name=portainer \
+    --restart=always \
+    -v /var/run/docker.sock:/var/run/docker.sock \
+    -v /var/lib/docker/volumes/portainer_data/:/data/ \
+    -v /usr/src/cert:/cert \
+    portainer/portainer-ce --sslcert /cert/fullchain.cer --sslkey /cert/private.key
 
 
-        # SubConverter
-        docker pull tindy2013/subconverter:latest
+    # SubConverter
+    docker pull tindy2013/subconverter:latest
 
-        docker run -d \
-        --name=subconverter \
-        --restart=always \
-        -p 25500:25500 \
-        tindy2013/subconverter
+    docker run -d \
+    --name=subconverter \
+    --restart=always \
+    -p 25500:25500 \
+    tindy2013/subconverter
 
-        cat > /etc/nginx/nginx.conf <<-EOF
+    cat > /etc/nginx/nginx.conf <<-EOF
 user nobody nogroup;
 worker_processes auto;
 error_log /var/log/nginx/error.log;
@@ -183,10 +181,11 @@ http {
 
 }
 EOF
-        # livemonitor
-        docker pull bigdaddywrangler/livemonitor
-        docker volume create monitor
-        cat > /var/lib/docker/volumes/monitor/config.json <<-EOF
+
+    # livemonitor
+    docker pull bigdaddywrangler/livemonitor
+    docker volume create monitor
+    cat > /var/lib/docker/volumes/monitor/config.json <<-EOF
 {
 	"submonitor_dic": {
         "1": {"class": "TwitterTweet", "target": "POTUS", "target_name": "Biden", "config_name": "twitter_config"}
@@ -207,37 +206,34 @@ EOF
     }
 }
 EOF
-        docker run -d \
-        --network=host \
-        --name=livemonitor \
-        --restart=always \
-        -v /var/lib/docker/volumes/monitor/config.json:/usr/bin/config.json \
-        bigdaddywrangler/livemonitor:latest
+    docker run -d \
+    --network=host \
+    --name=livemonitor \
+    --restart=always \
+    -v /var/lib/docker/volumes/monitor/config.json:/usr/bin/config.json \
+    bigdaddywrangler/livemonitor:latest
 
-        # downloader
-        docker pull bigdaddywrangler/downloader
-        docker volume create downloader
-        generate_json "nodes"
-        generate_json "keypair"
-        generate_json "rules"
-        generate_json "pubnodes"
-        generate_json "airport"
+    # downloader
+    docker pull bigdaddywrangler/downloader
+    docker volume create downloader
+    generate_json "nodes"
+    generate_json "keypair"
+    generate_json "rules"
+    generate_json "airport"
 
-        docker run -d \
-        --name=downloader \
-        --restart=always \
-        -v /var/lib/docker/volumes/downloader/nodes.json:/usr/bin/nodes.json \
-        -v /var/lib/docker/volumes/downloader/keypair.json:/usr/bin/keypair.json \
-        -v /var/lib/docker/volumes/downloader/rules.json:/usr/bin/rules.json \
-        -v /var/lib/docker/volumes/downloader/pubnodes.json:/usr/bin/pubnodes.json \
-        -v /var/lib/docker/volumes/downloader/airport.json:/usr/bin/airport.json \
-        -p 25501:25501 \
-        bigdaddywrangler/downloader:latest
-        
+    docker run -d \
+    --name=downloader \
+    --restart=always \
+    -v /var/lib/docker/volumes/downloader/nodes.json:/usr/bin/nodes.json \
+    -v /var/lib/docker/volumes/downloader/keypair.json:/usr/bin/keypair.json \
+    -v /var/lib/docker/volumes/downloader/rules.json:/usr/bin/rules.json \
+    -v /var/lib/docker/volumes/downloader/airport.json:/usr/bin/airport.json \
+    -p 25501:25501 \
+    bigdaddywrangler/downloader:latest
+    
 
 
-        nginx -s reload
-    fi
+    nginx -s reload
 
     #V2fly
     docker pull v2fly/v2fly-core:latest
@@ -279,23 +275,7 @@ EOF
       }
     }
 EOF
-    if [ "$pubpasswd" != "NULL" ];then
-        echo "," | cat >> /var/lib/docker/volumes/v2fly_config/config.json
-        cat >> /var/lib/docker/volumes/v2fly_config/config.json <<-EOF
-    {
-      "listen": "0.0.0.0",
-      "port": $((${ssport}+5)), 
-      "protocol": "shadowsocks",
-      "settings":{
-          "method": "chacha20-ietf-poly1305",
-          "ota": false, 
-          "password": "$pubpasswd"
-      }
-    }
-EOF
-    else
-        echo "" | cat >> /var/lib/docker/volumes/v2fly_config/config.json
-    fi
+    echo "" | cat >> /var/lib/docker/volumes/v2fly_config/config.json
     cat >> /var/lib/docker/volumes/v2fly_config/config.json <<-EOF
   ],
   "outbounds": [{ 
@@ -398,36 +378,6 @@ EOF
     }
 EOF
 
-elif [ "$1" == "pubnodes" ];then
-    arr=(`echo $pubnodes | tr ';' ' '`)
-    cat > /var/lib/docker/volumes/downloader/pubnodes.json << EOF
-    {
-        "nodes":[
-EOF
-    
-    for ((i=0;i<${#arr[@]};i++))
-    do
-        arrtemp=(`echo ${arr[$i]} | tr ',' ' '`)
-        head -c -1 << EOF | cat >> /var/lib/docker/volumes/downloader/pubnodes.json
-            {
-                "name":"${arrtemp[4]}",
-                "protocol":"${arrtemp[0]}",
-                "server":"${arrtemp[1]}",
-                "port":${arrtemp[2]},
-                "password":"${arrtemp[3]}"
-            }
-EOF
-        if [ "$i" != "$((${#arr[@]}-1))" ];then
-            echo "," | cat >> /var/lib/docker/volumes/downloader/pubnodes.json
-        fi
-    done
-    
-    cat >> /var/lib/docker/volumes/downloader/pubnodes.json << EOF
-    
-        ]
-    }
-EOF
-
 elif [ "$1" == "rules" ];then
     arr=(`echo $rules | tr ';' ' '`)
     cat > /var/lib/docker/volumes/downloader/rules.json << EOF
@@ -483,15 +433,13 @@ adminpasswd="NULL"
 
 mode="NULL"
 nodes="NULL"
-pubnodes="NULL"
 keypair="NULL"
 rules="NULL"
-pubpasswd="NULL"
 airport="NULL"
 domain="NULL"
 
 if [ $# -ne 0 ];then
-    TEMP=`getopt -o "" -l protocol-passwd:,unlockport-port:,ss-port:,ssh-port:,new-username:,admin-passwd:,mode-opt:,nodes:,keypair:,rules:,pubnodes:,pubpasswd:,airport:,domain:, -- "$@"`
+    TEMP=`getopt -o "" -l protocol-passwd:,unlockport-port:,ss-port:,ssh-port:,new-username:,admin-passwd:,mode-opt:,nodes:,keypair:,rules:,airport:,domain:, -- "$@"`
     eval set -- $TEMP
     while true ; do
             case "$1" in
@@ -525,12 +473,6 @@ if [ $# -ne 0 ];then
                     --rules) 
                         rules=$2;
                         shift 2;;
-                    --pubnodes) 
-                        pubnodes=$2;
-                        shift 2;;
-                    --pubpasswd) 
-                        pubpasswd=$2;
-                        shift 2;;
                     --airport) 
                         airport=$2;
                         shift 2;;
@@ -547,18 +489,16 @@ if [ $# -ne 0 ];then
     done
 fi
 
-if [ "$mode" == "MainServerInitialization" ] || [ "$mode" == "ServerInitialization" ];then
-    clear
-    if [ "$mainpasswd" == "NULL" ] || [ "$unlockport" == "NULL" ] || [ "$ssport" == "NULL" ] || [ "$sshport" == "NULL" ] || [ "$newusername" == "NULL" ] || [ "$adminpasswd" == "NULL" ] || [ "$domain" == "NULL" ];then
+clear
+
+# ServerInitialization
+if [ "$mode" == "SI" ];then
+
+    if [ "$mainpasswd" == "NULL" ] || [ "$unlockport" == "NULL" ] || [ "$ssport" == "NULL" ] || [ "$sshport" == "NULL" ] || [ "$newusername" == "NULL" ] || [ "$adminpasswd" == "NULL" ] || [ "$domain" == "NULL" ] || [ "$nodes" == "NULL" ] || [ "$keypair" == "NULL" ] || [ "$rules" == "NULL" ] || [ "$airport" == "NULL" ];then
         red "Invalid option.";
         exit 1
-    elif [ "$mode" == "MainServerInitialization" ];then
-        yellow " Main Server"
-        if [ "$nodes" == "NULL" ] || [ "$keypair" == "NULL" ] || [ "$rules" == "NULL" ] || [ "$pubnodes" == "NULL" ] || [ "$airport" == "NULL" ];then
-            red "Invalid option.";
-            exit 1
-        fi
     fi
+
     green "============================================================"
     yellow " Please confirm your VPS configuration:"
     yteal " VPS IPv4:" $(curl -s ipv4.icanhazip.com)
@@ -604,8 +544,8 @@ if [ "$mode" == "MainServerInitialization" ] || [ "$mode" == "ServerInitializati
         exit 0
     fi
 
-elif [ "$mode" == "UpdateCert" ];then
-    clear
+# UpdateCert
+elif [ "$mode" == "UC" ];then
     cert
     if [ "$?" != "1" ];then
         systemctl restart docker
@@ -616,9 +556,9 @@ elif [ "$mode" == "UpdateCert" ];then
         exit 0
     fi
 
-elif [ "$mode" == "UpdateSub" ];then
-    clear
-    if [ "$nodes" == "NULL" ] && [ "$keypair" == "NULL" ] && [ "$rules" == "NULL" ] && [ "$pubnodes" == "NULL" ] && [ "$airport" == "NULL" ];then
+# #UpdateCert
+elif [ "$mode" == "US" ];then
+    if [ "$nodes" == "NULL" ] && [ "$keypair" == "NULL" ] && [ "$rules" == "NULL" ] && [ "$airport" == "NULL" ];then
         red "Invalid option.";
         exit 1
     fi
@@ -631,12 +571,10 @@ elif [ "$mode" == "UpdateSub" ];then
     if [ "$rules" != "NULL" ];then
         generate_json "rules"
     fi
-    if [ "$pubnodes" != "NULL" ];then
-        generate_json "pubnodes"
-    fi
     if [ "$airport" != "NULL" ];then
         generate_json "airport"
     fi
+    systemctl restart docker
     green "==================================================="
     yteal " " "Subscription info has been successfully Updated."
     green "==================================================="
