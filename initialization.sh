@@ -500,6 +500,7 @@ if [ "$mode" == "SI" ];then
     green "============================================================"
     yellow " Please confirm your VPS configuration:"
     yteal " VPS IPv4:" $(curl -s ipv4.icanhazip.com)
+    yteal " VPS domain:" $domain
     yteal " Protocol password:" $mainpasswd
     yteal " Trojan listen port:" "443"
     yteal " Trojan fallback port:" $unlockport
@@ -524,6 +525,7 @@ if [ "$mode" == "SI" ];then
             green " Installation complete."
             yellow " Root login has been disabled."
             yteal " VPS IPv4:" $(curl -s ipv4.icanhazip.com)
+            yteal " VPS domain:" $domain
             yteal " Protocol password:" $mainpasswd
             yteal " Trojan listen port:" "443"
             yteal " Trojan fallback port:" $unlockport
