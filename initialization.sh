@@ -17,6 +17,10 @@ enter_promote(){
 }
 
 cert(){
+    #Disable firewall
+    systemctl stop firewalld.service
+    systemctl disable firewalld.service
+    sudo iptables -F
     real_addr=`ping ${domain} -c 1 | sed '1{s/[^(]*(//;s/).*//;q}'`
     local_addr=`curl ipv4.icanhazip.com`
     if [ $real_addr == $local_addr ]; then
