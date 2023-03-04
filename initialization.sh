@@ -77,6 +77,7 @@ install_docker(){
     #~ SubConverter
     #x livemonitor
     #~ downloader
+    #~ H@H
     #+ V2Ray
 
 
@@ -289,6 +290,21 @@ EOF
     v2fly/v2fly-core \
     run -c /etc/v2ray/config.json
     
+    if [ "$hath" != "NULL" ];then
+        #hath
+        docker pull tdcpf/hath
+        docker volume create hath_cache
+
+        docker run -d \
+        -v /var/lib/docker/volumes/hath_cache/:/home/hath/client/cache/ \
+        -v /usr/hath_download/:/home/hath/client/download/ \
+        -e HatH_ID=$hathid \
+        -e HatH_KEY=$hathkey \
+        -e HatH_PORT=$hath \
+        --name=hath \
+        --restart=always \
+        tdcpf/hath
+    fi
 }
 
 ssh_update(){
@@ -435,6 +451,9 @@ keypair="NULL"
 rules="NULL"
 airport="NULL"
 domain="NULL"
+hath="NULL"
+hathid="NULL"
+hathkey="NULL"
 
 if [ $# -ne 0 ];then
     TEMP=`getopt -o "" -l protocol-passwd:,unlockport-port:,ss-port:,ssh-port:,new-username:,admin-passwd:,mode-opt:,nodes:,keypair:,rules:,airport:,domain:, -- "$@"`
@@ -476,6 +495,15 @@ if [ $# -ne 0 ];then
                         shift 2;;
                     --domain) 
                         domain=$2;
+                        shift 2;;
+                    --hath-port) 
+                        hath=$2;
+                        shift 2;;
+                    --hath-id) 
+                        hathid=$2;
+                        shift 2;;
+                    --hath-key) 
+                        hathkey=$2;
                         shift 2;;
                     --) 
                         shift ; 
