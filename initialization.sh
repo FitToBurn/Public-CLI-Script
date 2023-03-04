@@ -77,28 +77,14 @@ install_docker(){
     systemctl enable containerd
 
     ###===Current List===###
-    #~ HatH
     #~ Portainer
     #~ SubConverter
     #x livemonitor
     #~ downloader
     #+ V2Ray
+    #~ HatH
 
-    if [ "$hath" != "NULL" ];then
     
-        #HatH
-        docker pull ghcr.io/disappear9/hentaiathome:latest
-        docker run -d \
-        --name HatH \
-        --restart=always \
-        -p $hath:$hath \
-        -v /usr/HatH:/hath/data \
-        -v /usr/HatH_download:/hath/download \
-        -e HatH_KEY="$hathid-$hathkey" \
-        -e HatH_ARGS="--cache-dir=/hath/data/cache --data-dir=/hath/data/data --download-dir=/hath/download --log-dir=/hath/data/log --temp-dir=/hath/data/temp --disable_logging" \
-        ghcr.io/disappear9/hentaiathome:latest
-
-    fi
 
     # Portainer
     docker pull portainer/portainer-ce:latest
@@ -309,7 +295,22 @@ EOF
     v2fly/v2fly-core \
     run -c /etc/v2ray/config.json
     
+    if [ "$hath" != "NULL" ];then
     
+        #HatH
+        docker pull ghcr.io/disappear9/hentaiathome:latest
+        docker run -d \
+        --name HatH \
+        --restart=always \
+        -p $hath:$hath \
+        -v /usr/HatH:/hath/data \
+        -v /usr/HatH_download:/hath/download \
+        -e HatH_KEY="$hathid-$hathkey" \
+        -e HatH_ARGS="--cache-dir=/hath/data/cache --data-dir=/hath/data/data --download-dir=/hath/download --log-dir=/hath/data/log --temp-dir=/hath/data/temp --disable_logging" \
+        ghcr.io/disappear9/hentaiathome:latest
+
+    fi
+
 }
 
 ssh_update(){
@@ -461,7 +462,7 @@ hathid="NULL"
 hathkey="NULL"
 
 if [ $# -ne 0 ];then
-    TEMP=`getopt -o "" -l protocol-passwd:,unlockport-port:,ss-port:,ssh-port:,new-username:,admin-passwd:,mode-opt:,nodes:,keypair:,rules:,airport:,domain:, -- "$@"`
+    TEMP=`getopt -o "" -l protocol-passwd:,unlockport-port:,ss-port:,ssh-port:,new-username:,admin-passwd:,mode-opt:,nodes:,keypair:,rules:,airport:,domain:,hath-port:,hath-id:,hath-key:, -- "$@"`
     eval set -- $TEMP
     while true ; do
             case "$1" in
