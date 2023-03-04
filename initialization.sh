@@ -77,13 +77,28 @@ install_docker(){
     systemctl enable containerd
 
     ###===Current List===###
+    #~ HatH
     #~ Portainer
     #~ SubConverter
     #x livemonitor
     #~ downloader
-    #~ H@H
     #+ V2Ray
 
+    if [ "$hath" != "NULL" ];then
+    
+        #HatH
+        docker pull ghcr.io/disappear9/hentaiathome:latest
+        docker run -d \
+        --name HatH \
+        --restart=always \
+        -p $hath:$hath \
+        -v /usr/HatH:/hath/data \
+        -v /usr/HatH_download:/hath/download \
+        -e HatH_KEY="$hathid-$hathkey" \
+        -e HatH_ARGS="--cache-dir=/hath/data/cache --data-dir=/hath/data/data --download-dir=/hath/download --log-dir=/hath/data/log --temp-dir=/hath/data/temp --disable_logging" \
+        ghcr.io/disappear9/hentaiathome:latest
+
+    fi
 
     # Portainer
     docker pull portainer/portainer-ce:latest
@@ -294,21 +309,7 @@ EOF
     v2fly/v2fly-core \
     run -c /etc/v2ray/config.json
     
-    if [ "$hath" != "NULL" ];then
     
-        #hath
-        docker pull ghcr.io/disappear9/hentaiathome:latest
-        docker run -d \
-        --name HatH \
-        --restart=always \
-        -p $hath:$hath \
-        -v /usr/HatH:/hath/data \
-        -v /usr/HatH_download:/hath/download \
-        -e HatH_KEY="$hathid-$hathkey" \
-        -e HatH_ARGS="--cache-dir=/hath/data/cache --data-dir=/hath/data/data --download-dir=/hath/download --log-dir=/hath/data/log --temp-dir=/hath/data/temp --disable_logging" \
-        ghcr.io/disappear9/hentaiathome:latest
-
-    fi
 }
 
 ssh_update(){
