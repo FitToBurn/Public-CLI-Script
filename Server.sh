@@ -527,8 +527,13 @@ if [ "$mode" == "MS" ] || [ "$mode" == "NS" ];then
     hath_id_key=${arr[1]}
 
     green "============================================================"
-    yellow " Main Server configuration:"
-    yteal " VPS domain:" $domain
+    if [ "$mode" == "MS" ];then
+        yellow " Main Server Configuration:"
+    fi
+    if [ "$mode" == "NS" ];then
+        yellow " Node Server Configuration:"
+    fi
+    yteal " VPS Domain:" $domain
     yteal " VPS IPv4:" $(curl -s ipv4.icanhazip.com)
     green "============================================================"
     echo
@@ -543,8 +548,13 @@ if [ "$mode" == "MS" ] || [ "$mode" == "NS" ];then
             ssh_update
             clear
             green "============================================================"
-            green " Installation complete."
-            yteal " VPS domain:" $domain
+            if [ "$mode" == "MS" ];then
+                yellow " Main Server Installation Complete."
+            fi
+            if [ "$mode" == "NS" ];then
+                yellow " Node Server Installation Complete."
+            fi
+            yteal " VPS Domain:" $domain
             yteal " VPS IPv4:" $(curl -s ipv4.icanhazip.com)
             green "============================================================"
         else
