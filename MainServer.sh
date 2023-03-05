@@ -590,7 +590,7 @@ elif [ "$mode" == "UC" ];then
         exit 0
     fi
 
-# #UpdateCert
+# #UpdateSub
 elif [ "$mode" == "US" ];then
     if [ "$nodes" == "NULL" ] && [ "$keypair" == "NULL" ] && [ "$rules" == "NULL" ] && [ "$airport" == "NULL" ];then
         red "Invalid option.";
