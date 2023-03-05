@@ -16,11 +16,14 @@ enter_promote(){
     echo -ne "\033[34m\033[01m$1\033[0m"
 }
 
-cert(){
-    #Disable firewall
+firewall_settings(){
+    ufw disable
     systemctl stop firewalld.service
     systemctl disable firewalld.service
     sudo iptables -F
+}
+
+cert(){
     real_addr=`ping ${domain} -c 1 | sed '1{s/[^(]*(//;s/).*//;q}'`
     local_addr=`curl ipv4.icanhazip.com`
     if [ $real_addr == $local_addr ]; then
@@ -52,6 +55,7 @@ cert(){
             --key-file   /usr/src/cert/private.key \
             --fullchain-file /usr/src/cert/fullchain.cer \
             --reloadcmd  "systemctl force-reload  nginx.service"
+
         if test -s /usr/src/cert/fullchain.cer; then
             return 0
         else
@@ -70,6 +74,7 @@ cert(){
 }
 
 install_docker(){
+
     curl -fsSL https://get.docker.com -o get-docker.sh
     sh get-docker.sh
     systemctl start docker
@@ -77,14 +82,11 @@ install_docker(){
     systemctl enable containerd
 
     ###===Current List===###
-    #~ Portainer
-    #~ SubConverter
-    #x livemonitor
-    #~ downloader
-    #+ V2Ray
-    #~ HatH
-
-    
+    # Portainer
+    # SubConverter
+    # downloader
+    # V2Ray
+    # HatH
 
     # Portainer
     docker pull portainer/portainer-ce:latest
@@ -99,17 +101,7 @@ install_docker(){
     -v /usr/src/cert:/cert \
     portainer/portainer-ce --sslcert /cert/fullchain.cer --sslkey /cert/private.key
 
-
-    # SubConverter
-    docker pull tindy2013/subconverter:latest
-
-    docker run -d \
-    --name=subconverter \
-    --restart=always \
-    -p 25500:25500 \
-    tindy2013/subconverter
-
-    cat > /etc/nginx/nginx.conf <<-EOF
+    cat > /etc/nginx/nginx.conf << EOF
 user nobody nogroup;
 worker_processes auto;
 error_log /var/log/nginx/error.log;
@@ -156,7 +148,9 @@ http {
             location = /50x.html {
         }
     }
-
+EOF
+    if [ "$mode" == "MS" ];then
+    head -c -1 << EOF | cat >> /etc/nginx/nginx.conf
     server {
         listen 500 ssl http2;
         server_name  _;
@@ -184,67 +178,51 @@ http {
             proxy_set_header  X-Real-IP           \$remote_addr;
         }
     } 
+EOF
+    fi
+    cat >> /etc/nginx/nginx.conf << EOF
 
 }
 EOF
-
-#     # livemonitor
-#     docker pull bigdaddywrangler/livemonitor
-#     docker volume create monitor
-#     cat > /var/lib/docker/volumes/monitor/config.json <<-EOF
-# {
-# 	"submonitor_dic": {
-#         "1": {"class": "TwitterTweet", "target": "POTUS", "target_name": "Biden", "config_name": "twitter_config"}
-#     },
-#     "twitter_config": {
-#         "interval": 60,
-#         "timezone": 8,
-#         "vip_dic": {
-#             "POTUS": {"test": 1},
-#         },
-#         "word_dic": {
-#         },
-#         "cookies": {},
-#         "proxy": {},
-#         "push_list": [
-#             {"type": "discord", "id": "dc webhook", "color_dic": {"test": 1}}
-#         ]
-#     }
-# }
-# EOF
-#     docker run -d \
-#     --network=host \
-#     --name=livemonitor \
-#     --restart=always \
-#     -v /var/lib/docker/volumes/monitor/config.json:/usr/bin/config.json \
-#     bigdaddywrangler/livemonitor:latest
-
-    # downloader
-    docker pull bigdaddywrangler/downloader
-    docker volume create downloader
-    generate_json "nodes"
-    generate_json "keypair"
-    generate_json "rules"
-    generate_json "airport"
-
-    docker run -d \
-    --name=downloader \
-    --restart=always \
-    -v /var/lib/docker/volumes/downloader/nodes.json:/usr/bin/nodes.json \
-    -v /var/lib/docker/volumes/downloader/keypair.json:/usr/bin/keypair.json \
-    -v /var/lib/docker/volumes/downloader/rules.json:/usr/bin/rules.json \
-    -v /var/lib/docker/volumes/downloader/airport.json:/usr/bin/airport.json \
-    -p 25501:25501 \
-    bigdaddywrangler/downloader:latest
     
-
-
     nginx -s reload
+    
+    if [ "$mode" == "MS" ];then
 
-    #V2fly
-    docker pull v2fly/v2fly-core:latest
-    docker volume create v2fly_config
-	head -c -1 << EOF | cat > /var/lib/docker/volumes/v2fly_config/config.json
+        # SubConverter
+        docker pull tindy2013/subconverter:latest
+
+        docker run -d \
+        --name=subconverter \
+        --restart=always \
+        -p 25500:25500 \
+        tindy2013/subconverter
+
+        # downloader
+        docker pull bigdaddywrangler/downloader
+        docker volume create downloader
+        generate_json "nodes"
+        generate_json "keypair"
+        generate_json "rules"
+        generate_json "airport"
+
+        docker run -d \
+        --name=downloader \
+        --restart=always \
+        -v /var/lib/docker/volumes/downloader/nodes.json:/usr/bin/nodes.json \
+        -v /var/lib/docker/volumes/downloader/keypair.json:/usr/bin/keypair.json \
+        -v /var/lib/docker/volumes/downloader/rules.json:/usr/bin/rules.json \
+        -v /var/lib/docker/volumes/downloader/airport.json:/usr/bin/airport.json \
+        -p 25501:25501 \
+        bigdaddywrangler/downloader:latest
+
+    fi
+
+    if [ "$v2fly" != "NULL" ];then
+        #V2fly
+        docker pull v2fly/v2fly-core:latest
+        docker volume create v2fly_config
+        cat > /var/lib/docker/volumes/v2fly_config/config.json << EOF
 {
   "log": {
     "loglevel": "warning"
@@ -255,8 +233,8 @@ EOF
       "port": 443, 
       "protocol": "trojan",
       "settings": {
-        "clients":[{"password": "$mainpasswd"}],
-        "fallbacks": [{"dest": $unlockport}]
+        "clients":[{"password": "$v2fly_passwd"}],
+        "fallbacks": [{"dest": 80}]
       },
       "streamSettings": {
         "network": "tcp",
@@ -272,12 +250,12 @@ EOF
     },
     {
       "listen": "0.0.0.0",
-      "port": $ssport, 
+      "port": $ss_port, 
       "protocol": "shadowsocks",
       "settings":{
           "method": "chacha20-ietf-poly1305",
           "ota": false, 
-          "password": "$mainpasswd"
+          "password": "$v2fly_passwd"
       }
     }
   ],
@@ -286,14 +264,15 @@ EOF
   }]
 }
 EOF
-    docker run -d \
-    --network=host \
-    --name=v2fly \
-    --restart=always \
-    -v /var/lib/docker/volumes/v2fly_config/config.json:/etc/v2ray/config.json \
-    -v /usr/src/cert:/cert \
-    v2fly/v2fly-core \
-    run -c /etc/v2ray/config.json
+        docker run -d \
+        --network=host \
+        --name=v2fly \
+        --restart=always \
+        -v /var/lib/docker/volumes/v2fly_config/config.json:/etc/v2ray/config.json \
+        -v /usr/src/cert:/cert \
+        v2fly/v2fly-core \
+        run -c /etc/v2ray/config.json
+    fi
     
     if [ "$hath" != "NULL" ];then
     
@@ -302,10 +281,10 @@ EOF
         docker run -d \
         --name HatH \
         --restart=always \
-        -p $hath:$hath \
+        -p $hath_port:$hath_port \
         -v /usr/HatH:/hath/data \
         -v /usr/HatH_download:/hath/download \
-        -e HatH_KEY="$hathid-$hathkey" \
+        -e HatH_KEY="$hath_id_key" \
         -e HatH_ARGS="--cache-dir=/hath/data/cache --data-dir=/hath/data/data --download-dir=/hath/download --log-dir=/hath/data/log --temp-dir=/hath/data/temp --disable_logging" \
         ghcr.io/disappear9/hentaiathome:latest
 
@@ -314,11 +293,12 @@ EOF
 }
 
 ssh_update(){
-  useradd -m ${newusername}
-  chpasswd <<< "${newusername}:${adminpasswd}"
 
-  chmod 777 /etc/sudoers
-  cat > /etc/sudoers <<-EOF
+    useradd -m ${admin_username}
+    chpasswd <<< "${admin_username}:${admin_passwd}"
+
+    chmod 777 /etc/sudoers
+    cat > /etc/sudoers << EOF
 Defaults   !visiblepw
 Defaults    always_set_home
 Defaults    match_group_by_gid
@@ -331,15 +311,15 @@ Defaults    env_keep += "LC_MONETARY LC_NAME LC_NUMERIC LC_PAPER LC_TELEPHONE"
 Defaults    env_keep += "LC_TIME LC_ALL LANGUAGE LINGUAS _XKB_CHARSET XAUTHORITY"
 Defaults    secure_path = /sbin:/bin:/usr/sbin:/usr/bin
 root	ALL=(ALL) 	ALL
-${newusername} ALL=(ALL) ALL
-${newusername} ALL=NOPASSWD: ALL
-#${newusername} ALL=NOPASSWD: /usr/libexec/openssh/sftp-server
-Defaults:${newusername} !requiretty
+${admin_username} ALL=(ALL) ALL
+${admin_username} ALL=NOPASSWD: ALL
+#${admin_username} ALL=NOPASSWD: /usr/libexec/openssh/sftp-server
+Defaults:${admin_username} !requiretty
 %wheel	ALL=(ALL)	ALL
 EOF
-  chmod 440 /etc/sudoers
-  cat > /etc/ssh/sshd_config <<-EOF
-Port ${sshport}
+    chmod 440 /etc/sudoers
+    cat > /etc/ssh/sshd_config << EOF
+Port ${ssh_port}
 HostKey /etc/ssh/ssh_host_rsa_key
 HostKey /etc/ssh/ssh_host_ecdsa_key
 HostKey /etc/ssh/ssh_host_ed25519_key
@@ -360,17 +340,18 @@ AcceptEnv LC_IDENTIFICATION LC_ALL LANGUAGE
 AcceptEnv XMODIFIERS
 Subsystem	sftp	sudo -n true && sudo -n /usr/lib/openssh/sftp-server || /usr/lib/openssh/sftp-server
 EOF
-  echo y | apt install policycoreutils-python-utils
-  semanage port -a -t ssh_port_t -p tcp ${sshport}
-  semanage port -l | grep ssh
-  systemctl restart sshd
+    echo y | apt install policycoreutils-python-utils
+    semanage port -a -t ssh_port_t -p tcp ${ssh_port}
+    semanage port -l | grep ssh
+    systemctl restart sshd
   
 }
 
 generate_json(){
-if [ "$1" == "nodes" ];then
-    arr=(`echo $nodes | tr ';' ' '`)
-    cat > /var/lib/docker/volumes/downloader/nodes.json << EOF
+
+    if [ "$1" == "nodes" ];then
+        arr=(`echo $nodes | tr ';' ' '`)
+        cat > /var/lib/docker/volumes/downloader/nodes.json << EOF
     {
         "nodes":[
 EOF
@@ -398,9 +379,9 @@ EOF
     }
 EOF
 
-elif [ "$1" == "rules" ];then
-    arr=(`echo $rules | tr ';' ' '`)
-    cat > /var/lib/docker/volumes/downloader/rules.json << EOF
+    elif [ "$1" == "rules" ];then
+        arr=(`echo $rules | tr ';' ' '`)
+        cat > /var/lib/docker/volumes/downloader/rules.json << EOF
     {
         "rules":[
 EOF
@@ -421,71 +402,78 @@ EOF
     }
 EOF
 
-elif [ "$1" == "keypair" ];then
-    arr=(`echo $keypair | tr ';' ' '`)
-    cat > /var/lib/docker/volumes/downloader/keypair.json << EOF
+    elif [ "$1" == "keypair" ];then
+        arr=(`echo $keypair | tr ';' ' '`)
+        cat > /var/lib/docker/volumes/downloader/keypair.json << EOF
     {
         "keys":["${arr[0]}","${arr[1]}"]
     }
 EOF
 
-elif [ "$1" == "airport" ];then
-    arr=(`echo $airport | tr ';' ' '`)
-    cat > /var/lib/docker/volumes/downloader/airport.json << EOF
+    elif [ "$1" == "airport" ];then
+        arr=(`echo $airport | tr ';' ' '`)
+        cat > /var/lib/docker/volumes/downloader/airport.json << EOF
     {
         "airport":["${arr[0]}"]
     }
 EOF
 
-fi
+    fi
+
 }
 
-
+#=============================================================================
+#=============================================================================
+#=============================================================================
+#=============================================================================
+#===========================Beginning of the script===========================
+#=============================================================================
+#=============================================================================
+#=============================================================================
+#=============================================================================
 
 [[ $EUID -ne 0 ]] && red "[Error] This script must be run as root!" && exit 1
 
-mainpasswd="NULL"
-unlockport="NULL"
-ssport="NULL"
-sshport="NULL"
-newusername="NULL"
-adminpasswd="NULL"
-
+domain="NULL"
 mode="NULL"
+
 nodes="NULL"
 keypair="NULL"
 rules="NULL"
 airport="NULL"
-domain="NULL"
+
+ssh="NULL"
+ssh_port="NULL"
+admin_username="NULL"
+admin_passwd="NULL"
+
 hath="NULL"
-hathid="NULL"
-hathkey="NULL"
+hath_port="NULL"
+hath_id_key="NULL"
+
+v2fly="NULL"
+ss_port="NULL"
+v2fly_passwd="NULL"
 
 if [ $# -ne 0 ];then
-    TEMP=`getopt -o "" -l protocol-passwd:,unlockport-port:,ss-port:,ssh-port:,new-username:,admin-passwd:,mode-opt:,nodes:,keypair:,rules:,airport:,domain:,hath-port:,hath-id:,hath-key:, -- "$@"`
+    TEMP=`getopt -o "" -l mode:,domain:,ssh:,v2fly:,hath:,nodes:,keypair:,rules:,airport:, -- "$@"`
     eval set -- $TEMP
     while true ; do
             case "$1" in
-                    --protocol-passwd) 
-                        mainpasswd=$2;
-                        shift 2;;
-                    --unlockport-port) 
-                        unlockport=$2;
-                        shift 2;;
-                    --ss-port) 
-                        ssport=$2;
-                        shift 2;;
-                    --ssh-port) 
-                        sshport=$2;
-                        shift 2;;
-                    --new-username) 
-                        newusername=$2;
-                        shift 2;;
-                    --admin-passwd) 
-                        adminpasswd=$2;
-                        shift 2;;
-                    --mode-opt) 
+                    --mode) 
                         mode=$2;
+                        shift 2;;
+                    --domain) 
+                        domain=$2;
+                        shift 2;;
+                    --ssh) 
+                        ssh=$2;
+                        shift 2;;
+                    --v2fly) 
+                        v2fly=$2;
+                        shift 2;;
+                    --hath) 
+                        hath=$2;
                         shift 2;;
                     --nodes) 
                         nodes=$2;
@@ -498,18 +486,6 @@ if [ $# -ne 0 ];then
                         shift 2;;
                     --airport) 
                         airport=$2;
-                        shift 2;;
-                    --domain) 
-                        domain=$2;
-                        shift 2;;
-                    --hath-port) 
-                        hath=$2;
-                        shift 2;;
-                    --hath-id) 
-                        hathid=$2;
-                        shift 2;;
-                    --hath-key) 
-                        hathkey=$2;
                         shift 2;;
                     --) 
                         shift ; 
@@ -524,32 +500,43 @@ fi
 clear
 
 # ServerInitialization
-if [ "$mode" == "SI" ];then
+if [ "$mode" == "MS" ] || [ "$mode" == "NS" ];then
 
-    if [ "$mainpasswd" == "NULL" ] || [ "$unlockport" == "NULL" ] || [ "$ssport" == "NULL" ] || [ "$sshport" == "NULL" ] || [ "$newusername" == "NULL" ] || [ "$adminpasswd" == "NULL" ] || [ "$domain" == "NULL" ] || [ "$nodes" == "NULL" ] || [ "$keypair" == "NULL" ] || [ "$rules" == "NULL" ] || [ "$airport" == "NULL" ];then
-        red "Invalid option.";
-        exit 1
+    if [ "$mode" == "MS" ];then
+        if [ "$ssh" == "NULL" ] || [ "$domain" == "NULL" ] || [ "$nodes" == "NULL" ] || [ "$keypair" == "NULL" ] || [ "$rules" == "NULL" ] || [ "$airport" == "NULL" ];then
+            red "Invalid option.";
+            exit 1
+        fi
     fi
+    if [ "$mode" == "NS" ];then
+        if [ "$ssh" == "NULL" ] || [ "$domain" == "NULL" ] || [ "$v2fly" == "NULL" ];then
+            red "Invalid option.";
+            exit 1
+        fi
+    fi
+    
+    arr=(`echo $ssh | tr ';' ' '`)
+    ssh_port=${arr[0]}
+    admin_username=${arr[1]}
+    admin_passwd=${arr[2]}
+    arr=(`echo $v2fly | tr ';' ' '`)
+    ss_port=${arr[0]}
+    v2fly_passwd=${arr[1]}
+    arr=(`echo $hath | tr ';' ' '`)
+    hath_port=${arr[0]}
+    hath_id_key=${arr[1]}
 
     green "============================================================"
-    yellow " Please confirm your VPS configuration:"
-    yteal " VPS IPv4:" $(curl -s ipv4.icanhazip.com)
+    yellow " Main Server configuration:"
     yteal " VPS domain:" $domain
-    yteal " Protocol password:" $mainpasswd
-    yteal " Trojan listen port:" "443"
-    yteal " Trojan fallback port:" $unlockport
-    yteal " Shadowsocks listen port:" $ssport
-    yteal " Shadowsocks encryption:" "chacha20-ietf-1305"
-    yteal " SSH port will be changed to:" $sshport
-    yteal " Username of admin account:" $newusername
-    yteal " Password of admin account:" $adminpasswd
+    yteal " VPS IPv4:" $(curl -s ipv4.icanhazip.com)
     green "============================================================"
     echo
     enter_promote " Confirm(y/n):"
     read confirmation
     if [ "$confirmation" == "y" ] || [ "$confirmation" == "Y" ];then
         echo
-        ufw disable
+        firewall_settings
         cert
         if [ "$?" != "1" ];then
             install_docker
@@ -557,17 +544,8 @@ if [ "$mode" == "SI" ];then
             clear
             green "============================================================"
             green " Installation complete."
-            yellow " Root login has been disabled."
-            yteal " VPS IPv4:" $(curl -s ipv4.icanhazip.com)
             yteal " VPS domain:" $domain
-            yteal " Protocol password:" $mainpasswd
-            yteal " Trojan listen port:" "443"
-            yteal " Trojan fallback port:" $unlockport
-            yteal " Shadowsocks listen port:" $ssport
-            yteal " Shadowsocks encryption:" "chacha20-ietf-1305"
-            yteal " SSH port has been changed to:" $sshport
-            yteal " Username of admin account:" $newusername
-            yteal " Password of admin account:" $adminpasswd
+            yteal " VPS IPv4:" $(curl -s ipv4.icanhazip.com)
             green "============================================================"
         else
             exit 0
