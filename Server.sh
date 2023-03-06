@@ -252,6 +252,7 @@ EOF
       }
     },
 EOF
+        fi
         cat >> /var/lib/docker/volumes/v2fly_config/config.json << EOF
 
     {
