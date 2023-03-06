@@ -228,6 +228,9 @@ EOF
     "loglevel": "warning"
   },
   "inbounds": [
+EOF
+        if [ "$trojan_protocol" == "1" ];then
+        head -c -1 << EOF | cat >> /var/lib/docker/volumes/v2fly_config/config.json
     {
       "listen": "0.0.0.0",
       "port": 443, 
@@ -248,6 +251,9 @@ EOF
         }
       }
     },
+EOF
+        cat >> /var/lib/docker/volumes/v2fly_config/config.json << EOF
+
     {
       "listen": "0.0.0.0",
       "port": $ss_port, 
@@ -361,11 +367,9 @@ EOF
         arrtemp=(`echo ${arr[$i]} | tr ',' ' '`)
         head -c -1 << EOF | cat >> /var/lib/docker/volumes/downloader/nodes.json
             {
-                "name":"${arrtemp[4]}",
+                "name":"${arrtemp[2]}",
                 "protocol":"${arrtemp[0]}",
-                "server":"${arrtemp[1]}",
-                "port":${arrtemp[2]},
-                "password":"${arrtemp[3]}"
+                "server":"${arrtemp[1]}"
             }
 EOF
         if [ "$i" != "$((${#arr[@]}-1))" ];then
@@ -454,6 +458,7 @@ hath_id_key="NULL"
 v2fly="NULL"
 ss_port="NULL"
 v2fly_passwd="NULL"
+trojan_protocol="NULL"
 
 if [ $# -ne 0 ];then
     TEMP=`getopt -o "" -l mode:,domain:,ssh:,v2fly:,hath:,nodes:,keypair:,rules:,airport:, -- "$@"`
@@ -522,6 +527,7 @@ if [ "$mode" == "MS" ] || [ "$mode" == "NS" ];then
     arr=(`echo $v2fly | tr ';' ' '`)
     ss_port=${arr[0]}
     v2fly_passwd=${arr[1]}
+    trojan_protocol=${arr[2]}
     arr=(`echo $hath | tr ';' ' '`)
     hath_port=${arr[0]}
     hath_id_key=${arr[1]}
