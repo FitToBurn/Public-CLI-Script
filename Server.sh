@@ -93,7 +93,7 @@ install_docker(){
     docker volume create portainer_data
 
     docker run -d \
-    -p 600:9443 -p 8000:8000 \
+    -p $portainer_port:9443 -p 8000:8000 \
     --name=portainer \
     --restart=always \
     -v /var/run/docker.sock:/var/run/docker.sock \
@@ -152,7 +152,7 @@ EOF
     if [ "$mode" == "MS" ];then
     head -c -1 << EOF | cat >> /etc/nginx/nginx.conf
     server {
-        listen 500 ssl http2;
+        listen $subconverter_port ssl http2;
         server_name  _;
         gzip on;
         ssl_certificate /usr/src/cert/fullchain.cer;
@@ -166,7 +166,7 @@ EOF
     }    
 
     server {
-        listen 501 ssl http2;
+        listen $downloader_port ssl http2;
         server_name  _;
         gzip on;
         ssl_certificate /usr/src/cert/fullchain.cer;
@@ -461,8 +461,13 @@ ss_port="NULL"
 v2fly_passwd="NULL"
 trojan_protocol="NULL"
 
+ports="NULL"
+portainer_port="NULL"
+subconverter_port="NULL"
+downloader_port="NULL"
+
 if [ $# -ne 0 ];then
-    TEMP=`getopt -o "" -l mode:,domain:,ssh:,v2fly:,hath:,nodes:,keypair:,rules:,airport:, -- "$@"`
+    TEMP=`getopt -o "" -l mode:,domain:,ssh:,ports:,v2fly:,hath:,nodes:,keypair:,rules:,airport:, -- "$@"`
     eval set -- $TEMP
     while true ; do
             case "$1" in
@@ -474,6 +479,9 @@ if [ $# -ne 0 ];then
                         shift 2;;
                     --ssh) 
                         ssh=$2;
+                        shift 2;;
+                    --ports) 
+                        ports=$2;
                         shift 2;;
                     --v2fly) 
                         v2fly=$2;
@@ -509,13 +517,13 @@ clear
 if [ "$mode" == "MS" ] || [ "$mode" == "NS" ];then
 
     if [ "$mode" == "MS" ];then
-        if [ "$ssh" == "NULL" ] || [ "$domain" == "NULL" ] || [ "$nodes" == "NULL" ] || [ "$keypair" == "NULL" ] || [ "$rules" == "NULL" ] || [ "$airport" == "NULL" ];then
+        if [ "$ssh" == "NULL" ] || [ "$domain" == "NULL" ] || [ "$ports" == "NULL" ] || [ "$nodes" == "NULL" ] || [ "$keypair" == "NULL" ] || [ "$rules" == "NULL" ] || [ "$airport" == "NULL" ];then
             red "Invalid option.";
             exit 1
         fi
     fi
     if [ "$mode" == "NS" ];then
-        if [ "$ssh" == "NULL" ] || [ "$domain" == "NULL" ];then
+        if [ "$ssh" == "NULL" ] || [ "$domain" == "NULL" ] || [ "$ports" == "NULL" ];then
             red "Invalid option.";
             exit 1
         fi
@@ -525,13 +533,20 @@ if [ "$mode" == "MS" ] || [ "$mode" == "NS" ];then
     ssh_port=${arr[0]}
     admin_username=${arr[1]}
     admin_passwd=${arr[2]}
+
     arr=(`echo $v2fly | tr ';' ' '`)
     ss_port=${arr[0]}
     v2fly_passwd=${arr[1]}
     trojan_protocol=${arr[2]}
+
     arr=(`echo $hath | tr ';' ' '`)
     hath_port=${arr[0]}
     hath_id_key=${arr[1]}
+
+    arr=(`echo $ports | tr ';' ' '`)
+    portainer_port=${arr[0]}
+    subconverter_port=${arr[1]}
+    downloader_port=${arr[2]}
 
     green "============================================================"
     if [ "$mode" == "MS" ];then
@@ -575,6 +590,10 @@ if [ "$mode" == "MS" ] || [ "$mode" == "NS" ];then
 
 # UpdateCert
 elif [ "$mode" == "UC" ];then
+    if [ "$domain" == "NULL" ];then
+        red "Invalid option.";
+        exit 1
+    fi
     cert
     if [ "$?" != "1" ];then
         systemctl restart docker
