@@ -515,7 +515,7 @@ if [ "$mode" == "MS" ] || [ "$mode" == "NS" ];then
         fi
     fi
     if [ "$mode" == "NS" ];then
-        if [ "$ssh" == "NULL" ] || [ "$domain" == "NULL" ] || [ "$v2fly" == "NULL" ];then
+        if [ "$ssh" == "NULL" ] || [ "$domain" == "NULL" ];then
             red "Invalid option.";
             exit 1
         fi
