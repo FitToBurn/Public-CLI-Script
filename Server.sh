@@ -26,7 +26,7 @@ firewall_settings(){
 cert(){
     real_addr=`ping ${domain} -c 1 | sed '1{s/[^(]*(//;s/).*//;q}'`
     local_addr=`curl ipv4.icanhazip.com`
-    if [ $real_addr == $local_addr ]; then
+    if [ $real_addr == $local_addr ] || [ "$mode" != "UC" ]; then
         green "==============================="
         green "Domain name resolves correctly."
         green "==============================="
