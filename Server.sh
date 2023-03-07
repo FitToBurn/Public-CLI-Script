@@ -623,7 +623,7 @@ elif [ "$mode" == "US" ];then
     if [ "$airport" != "NULL" ];then
         generate_json "airport"
     fi
-    systemctl restart docker
+    docker restart downloader
     green "==================================================="
     yteal " " "Subscription info has been successfully Updated."
     green "==================================================="
