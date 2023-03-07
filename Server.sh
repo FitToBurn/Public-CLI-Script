@@ -41,10 +41,11 @@ cert(){
         wget https://github.com/atrandys/v2ray-ws-tls/raw/master/web.zip
             unzip web.zip
         systemctl restart nginx.service
-        if test -s /usr/src/cert/fullchain.cer; then
-            return 0
+        if [ "$mode" != "UC" ];then
+            if test -s /usr/src/cert/fullchain.cer; then
+                return 0
+            fi
         fi
-        
         mkdir /usr/src/cert
         rm -f /usr/src/cert/private.key
         rm -f /usr/src/cert/fullchain.cer
