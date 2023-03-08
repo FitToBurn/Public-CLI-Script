@@ -26,7 +26,7 @@ firewall_settings(){
 cert(){
     real_addr=`ping ${domain} -c 1 | sed '1{s/[^(]*(//;s/).*//;q}'`
     local_addr=`curl ipv4.icanhazip.com`
-    if [ "$mode" != "UC" ] || [ $real_addr == $local_addr ]; then
+    if [ "$mode" == "UC" ] || [ $real_addr == $local_addr ]; then
         green "==============================="
         green "Domain name resolves correctly."
         green "==============================="
@@ -50,9 +50,9 @@ cert(){
         rm -f /usr/src/cert/private.key
         rm -f /usr/src/cert/fullchain.cer
         curl https://get.acme.sh | sh
-        ~/.acme.sh/acme.sh  --set-default-ca --server letsencrypt
-        ~/.acme.sh/acme.sh  --issue  -d $domain  --webroot /var/www/html/
-        ~/.acme.sh/acme.sh  --installcert  -d  $domain   \
+        ~/.acme.sh/acme.sh  --debug --set-default-ca --server letsencrypt
+        ~/.acme.sh/acme.sh  --debug --issue  -d $domain  --webroot /var/www/html/
+        ~/.acme.sh/acme.sh  --debug --installcert  -d  $domain   \
             --key-file   /usr/src/cert/private.key \
             --fullchain-file /usr/src/cert/fullchain.cer \
             --reloadcmd  "systemctl force-reload  nginx.service"
