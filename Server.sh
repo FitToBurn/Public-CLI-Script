@@ -31,6 +31,7 @@ cert(){
         green "Domain name resolves correctly."
         green "==============================="
 
+        apt-get update
         apt-get install -y unzip zip curl tar nginx
         #apt-get install -y libseccomp-devel
         systemctl enable nginx.service
