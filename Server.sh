@@ -151,6 +151,25 @@ http {
         }
     }
 EOF
+
+    if [ "$openai" != "NULL" ];then
+    head -c -1 << EOF | cat >> /etc/nginx/nginx.conf
+    server {
+        listen $openai_port ssl http2;
+        server_name  _;
+        gzip on;
+        ssl_certificate /usr/src/cert/fullchain.cer;
+        ssl_certificate_key /usr/src/cert/private.key;
+
+        location /$openai_pass/ {
+            proxy_pass https://api.openai.com/;
+            proxy_set_header  Host                api.openai.com;
+            proxy_set_header  X-Real-IP           \$remote_addr;
+        }
+    } 
+EOF
+    fi
+
     if [ "$mode" == "MS" ];then
     head -c -1 << EOF | cat >> /etc/nginx/nginx.conf
     server {
@@ -468,8 +487,12 @@ portainer_port="NULL"
 subconverter_port="NULL"
 downloader_port="NULL"
 
+openai="NULL"
+openai_port="NULL"
+openai_pass="NULL"
+
 if [ $# -ne 0 ];then
-    TEMP=`getopt -o "" -l mode:,domain:,ssh:,ports:,v2fly:,hath:,nodes:,keypair:,rules:,airport:, -- "$@"`
+    TEMP=`getopt -o "" -l mode:,domain:,ssh:,ports:,v2fly:,hath:,openai:,nodes:,keypair:,rules:,airport:, -- "$@"`
     eval set -- $TEMP
     while true ; do
             case "$1" in
@@ -490,6 +513,9 @@ if [ $# -ne 0 ];then
                         shift 2;;
                     --hath) 
                         hath=$2;
+                        shift 2;;
+                    --openai) 
+                        openai=$2;
                         shift 2;;
                     --nodes) 
                         nodes=$2;
@@ -549,6 +575,10 @@ if [ "$mode" == "MS" ] || [ "$mode" == "NS" ];then
     portainer_port=${arr[0]}
     subconverter_port=${arr[1]}
     downloader_port=${arr[2]}
+
+    arr=(`echo $openai | tr ';' ' '`)
+    openai_port=${arr[0]}
+    openai_pass=${arr[1]}
 
     green "============================================================"
     if [ "$mode" == "MS" ];then
