@@ -226,6 +226,7 @@ EOF
         generate_json "keypair"
         generate_json "rules"
         generate_json "airport"
+        mkdir 741 /usr/clash
 
         docker run -d \
         --name=downloader \
@@ -234,6 +235,7 @@ EOF
         -v /var/lib/docker/volumes/downloader/keypair.json:/usr/bin/keypair.json \
         -v /var/lib/docker/volumes/downloader/rules.json:/usr/bin/rules.json \
         -v /var/lib/docker/volumes/downloader/airport.json:/usr/bin/airport.json \
+        -v /usr/clash:/usr/bin/clash \
         -p 25501:25501 \
         bigdaddywrangler/downloader:latest
 
@@ -432,7 +434,7 @@ EOF
         arr=(`echo $keypair | tr ';' ' '`)
         cat > /var/lib/docker/volumes/downloader/keypair.json << EOF
     {
-        "keys":["${arr[0]}","${arr[1]}"]
+        "keys":["${arr[0]}","${arr[1]}","${arr[2]}"]
     }
 EOF
 
