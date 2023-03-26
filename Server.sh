@@ -89,19 +89,23 @@ install_docker(){
     # downloader
     # V2Ray
     # HatH
+    if [ "$portainer" != "NULL" ];then
+        # Portainer
+        docker pull portainer/portainer-ce:latest
+        docker volume create portainer_data
+        mkdir -p 741 /usr/config/portainer
+        echo -n $portainer_passwd > /usr/config/portainer/passwd
 
-    # Portainer
-    docker pull portainer/portainer-ce:latest
-    docker volume create portainer_data
-
-    docker run -d \
-    -p $portainer_port:9443 -p 8000:8000 \
-    --name=portainer \
-    --restart=always \
-    -v /var/run/docker.sock:/var/run/docker.sock \
-    -v /var/lib/docker/volumes/portainer_data/:/data/ \
-    -v /usr/src/cert:/cert \
-    portainer/portainer-ce --sslcert /cert/fullchain.cer --sslkey /cert/private.key
+        docker run -d \
+        -p $portainer_port:9443 -p 8000:8000 \
+        --name=portainer \
+        --restart=always \
+        -v /var/run/docker.sock:/var/run/docker.sock \
+        -v /var/lib/docker/volumes/portainer_data/:/data/ \
+        -v /usr/src/cert:/cert \
+        -v /usr/config/portainer/passwd:/tmp/portainer_password \
+        portainer/portainer-ce --sslcert /cert/fullchain.cer --sslkey /cert/private.key --admin-password-file /tmp/portainer_password
+    fi
 
     cat > /etc/nginx/nginx.conf << EOF
 user nobody nogroup;
@@ -226,7 +230,7 @@ EOF
         generate_json "keypair"
         generate_json "rules"
         generate_json "airport"
-        mkdir 741 /usr/clash
+        mkdir -p 741 /usr/config/clash
 
         docker run -d \
         --name=downloader \
@@ -235,7 +239,7 @@ EOF
         -v /var/lib/docker/volumes/downloader/keypair.json:/usr/bin/keypair.json \
         -v /var/lib/docker/volumes/downloader/rules.json:/usr/bin/rules.json \
         -v /var/lib/docker/volumes/downloader/airport.json:/usr/bin/airport.json \
-        -v /usr/clash:/usr/bin/clash \
+        -v /usr/config/clash:/usr/bin/clash \
         -p 25501:25501 \
         bigdaddywrangler/downloader:latest
 
@@ -485,7 +489,6 @@ v2fly_passwd="NULL"
 trojan_protocol="NULL"
 
 ports="NULL"
-portainer_port="NULL"
 subconverter_port="NULL"
 downloader_port="NULL"
 
@@ -493,8 +496,12 @@ openai="NULL"
 openai_port="NULL"
 openai_pass="NULL"
 
+portainer="NULL"
+portainer_port="NULL"
+portainer_passwd="NULL"
+
 if [ $# -ne 0 ];then
-    TEMP=`getopt -o "" -l mode:,domain:,ssh:,ports:,v2fly:,hath:,openai:,nodes:,keypair:,rules:,airport:, -- "$@"`
+    TEMP=`getopt -o "" -l mode:,domain:,ssh:,ports:,v2fly:,hath:,portainer:,openai:,nodes:,keypair:,rules:,airport:, -- "$@"`
     eval set -- $TEMP
     while true ; do
             case "$1" in
@@ -515,6 +522,9 @@ if [ $# -ne 0 ];then
                         shift 2;;
                     --hath) 
                         hath=$2;
+                        shift 2;;
+                    --portainer) 
+                        portainer=$2;
                         shift 2;;
                     --openai) 
                         openai=$2;
@@ -573,10 +583,13 @@ if [ "$mode" == "MS" ] || [ "$mode" == "NS" ];then
     hath_port=${arr[0]}
     hath_id_key=${arr[1]}
 
-    arr=(`echo $ports | tr ';' ' '`)
+    arr=(`echo $portainer | tr ';' ' '`)
     portainer_port=${arr[0]}
-    subconverter_port=${arr[1]}
-    downloader_port=${arr[2]}
+    portainer_passwd=${arr[1]}
+
+    arr=(`echo $ports | tr ';' ' '`)
+    subconverter_port=${arr[0]}
+    downloader_port=${arr[1]}
 
     arr=(`echo $openai | tr ';' ' '`)
     openai_port=${arr[0]}
