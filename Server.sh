@@ -557,13 +557,13 @@ clear
 if [ "$mode" == "MS" ] || [ "$mode" == "NS" ];then
 
     if [ "$mode" == "MS" ];then
-        if [ "$ssh" == "NULL" ] || [ "$domain" == "NULL" ] || [ "$ports" == "NULL" ] || [ "$nodes" == "NULL" ] || [ "$keypair" == "NULL" ] || [ "$rules" == "NULL" ] || [ "$airport" == "NULL" ];then
+        if [ "$ssh" == "NULL" ] || [ "$domain" == "NULL" ] || [ "$ports" == "NULL" ] || [ "$airport" == "NULL" ] || [ "$nodes" == "NULL" ] || [ "$keypair" == "NULL" ] || [ "$rules" == "NULL" ] || [ "$airport" == "NULL" ];then
             red "Invalid option.";
             exit 1
         fi
     fi
     if [ "$mode" == "NS" ];then
-        if [ "$ssh" == "NULL" ] || [ "$domain" == "NULL" ] || [ "$ports" == "NULL" ];then
+        if [ "$ssh" == "NULL" ] || [ "$domain" == "NULL" ];then
             red "Invalid option.";
             exit 1
         fi
