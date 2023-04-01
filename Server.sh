@@ -345,8 +345,7 @@ Defaults    env_keep += "LC_MONETARY LC_NAME LC_NUMERIC LC_PAPER LC_TELEPHONE"
 Defaults    env_keep += "LC_TIME LC_ALL LANGUAGE LINGUAS _XKB_CHARSET XAUTHORITY"
 Defaults    secure_path = /sbin:/bin:/usr/sbin:/usr/bin
 root	ALL=(ALL) 	ALL
-${admin_username} ALL=(ALL) ALL
-${admin_username} ALL=NOPASSWD: ALL
+${admin_username} ALL=(ALL) NOPASSWD: ALL
 Defaults:${admin_username} !requiretty
 %wheel	ALL=(ALL)	ALL
 EOF
@@ -386,6 +385,7 @@ fi
 EOF
 
     systemctl restart sshd
+    usermod -a -G docker ${admin_username}
   
 }
 
