@@ -378,7 +378,9 @@ EOF
     semanage port -l | grep ssh
 
     cat >> /home/${admin_username}/.profile << EOF
-if [ $(id -u) -ne 0 ]; then
+    
+    
+if [ \$(id -u) -ne 0 ]; then
   sudo -i
 fi
 EOF
