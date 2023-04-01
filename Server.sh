@@ -347,7 +347,6 @@ Defaults    secure_path = /sbin:/bin:/usr/sbin:/usr/bin
 root	ALL=(ALL) 	ALL
 ${admin_username} ALL=(ALL) ALL
 ${admin_username} ALL=NOPASSWD: ALL
-#${admin_username} ALL=NOPASSWD: /usr/libexec/openssh/sftp-server
 Defaults:${admin_username} !requiretty
 %wheel	ALL=(ALL)	ALL
 EOF
@@ -377,6 +376,13 @@ EOF
     echo y | apt install policycoreutils-python-utils
     semanage port -a -t ssh_port_t -p tcp ${ssh_port}
     semanage port -l | grep ssh
+
+    cat >> /home/${admin_username}/.profile << EOF
+if [ $(id -u) -ne 0 ]; then
+  sudo -i
+fi
+EOF
+
     systemctl restart sshd
   
 }
