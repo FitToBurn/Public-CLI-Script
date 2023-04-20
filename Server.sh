@@ -167,8 +167,11 @@ EOF
 
         location /$openai_pass/ {
             proxy_pass https://api.openai.com/;
-            proxy_set_header  Host                api.openai.com;
-            proxy_set_header  X-Real-IP           \$remote_addr;
+            proxy_ssl_server_name on;
+	        proxy_set_header Host api.openai.com;
+	        chunked_transfer_encoding off;
+	        proxy_buffering off;
+	        proxy_cache off;
         }
     } 
 EOF
