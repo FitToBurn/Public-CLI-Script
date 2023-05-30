@@ -21,6 +21,7 @@ firewall_settings(){
     systemctl stop firewalld.service
     systemctl disable firewalld.service
     sudo iptables -F
+    sudo iptables-save > /etc/iptables/rules.v4
 }
 
 cert(){
