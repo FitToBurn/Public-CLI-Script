@@ -91,6 +91,17 @@ install_docker(){
 
     curl -fsSL https://get.docker.com -o get-docker.sh
     sh get-docker.sh
+    
+    cat <<EOL >/etc/docker/daemon.json
+{
+  "log-driver": "json-file",
+  "log-opts": {
+    "max-size": "10m",
+    "max-file": "3"
+  }
+}
+EOL
+
     systemctl start docker
     systemctl enable docker
     systemctl enable containerd
