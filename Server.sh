@@ -16,6 +16,16 @@ enter_promote(){
     echo -ne "\033[34m\033[01m$1\033[0m"
 }
 
+is_apt_running() {
+  ps aux | grep -E '[a]pt|[d]pkg' > /dev/null 2>&1
+}
+
+wait_for_apt() {
+  while is_apt_running; do
+    sleep 2
+  done
+}
+
 firewall_settings(){
     ufw disable
     systemctl stop firewalld.service
@@ -33,6 +43,7 @@ cert(){
         green "==============================="
 
         apt-get update
+        wait_for_apt
         apt-get install -y unzip zip curl tar nginx
         #apt-get install -y libseccomp-devel
         systemctl enable nginx.service
