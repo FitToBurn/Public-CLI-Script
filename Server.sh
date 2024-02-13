@@ -706,26 +706,27 @@ elif [ "$mode" == "UC" ];then
         red "Invalid option.";
         exit 1
     fi
+    
+    container_name="CloudflareDDNS"
+    if [ "$(docker ps -a -q -f name=$container_name)" ]; then
+    
+        ddns=$(docker exec $container_name env | grep API_KEY | cut -d'=' -f2)
+        docker stop $container_name && docker rm $container_name
+
+        docker pull oznu/cloudflare-ddns
+        docker run -d \
+        --name=$container_name \
+        --restart=always \
+        -e API_KEY=$ddns \
+        -e ZONE=$zone \
+        -e SUBDOMAIN=$subdomain \
+        oznu/cloudflare-ddns
+
+    fi
+    sleep 10
+
     cert
     if [ "$?" != "1" ];then
-
-        container_name="CloudflareDDNS"
-        if [ "$(docker ps -a -q -f name=$container_name)" ]; then
-        
-            ddns=$(docker exec $container_name env | grep API_KEY | cut -d'=' -f2)
-            docker stop $container_name && docker rm $container_name
-
-            docker pull oznu/cloudflare-ddns
-            docker run -d \
-            --name=$container_name \
-            --restart=always \
-            -e API_KEY=$ddns \
-            -e ZONE=$zone \
-            -e SUBDOMAIN=$subdomain \
-            oznu/cloudflare-ddns
-
-        fi
-
         systemctl restart docker
         green "=================================================="
         yteal " " "SSL Certificate has been successfully Updated."
