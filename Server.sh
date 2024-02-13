@@ -35,13 +35,6 @@ firewall_settings(){
 }
 
 cert(){
-
-    IFS='.' read -ra ADDR <<< "$domain"
-    domain_length=${#ADDR[@]}
-    zone=${ADDR[domain_length-2]}.${ADDR[domain_length-1]}
-    unset ADDR[domain_length-1]
-    unset ADDR[domain_length-2]
-    subdomain=$(IFS=. ; echo "${ADDR[*]}")
     
     real_addr=`ping ${domain} -c 1 | sed '1{s/[^(]*(//;s/).*//;q}'`
     local_addr=`curl ipv4.icanhazip.com`
@@ -283,6 +276,13 @@ EOF
     if [ "$ddns" != "NULL" ];then
     
         #ddns
+        IFS='.' read -ra ADDR <<< "$domain"
+        domain_length=${#ADDR[@]}
+        zone=${ADDR[domain_length-2]}.${ADDR[domain_length-1]}
+        unset ADDR[domain_length-1]
+        unset ADDR[domain_length-2]
+        subdomain=$(IFS=. ; echo "${ADDR[*]}")
+        
         docker pull oznu/cloudflare-ddns
         docker run -d \
         --name=CloudflareDDNS \
@@ -706,9 +706,16 @@ elif [ "$mode" == "UC" ];then
         red "Invalid option.";
         exit 1
     fi
-    
+
     container_name="CloudflareDDNS"
     if [ "$(docker ps -a -q -f name=$container_name)" ]; then
+
+        IFS='.' read -ra ADDR <<< "$domain"
+        domain_length=${#ADDR[@]}
+        zone=${ADDR[domain_length-2]}.${ADDR[domain_length-1]}
+        unset ADDR[domain_length-1]
+        unset ADDR[domain_length-2]
+        subdomain=$(IFS=. ; echo "${ADDR[*]}")
     
         ddns=$(docker exec $container_name env | grep API_KEY | cut -d'=' -f2)
         docker stop $container_name && docker rm $container_name
