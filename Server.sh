@@ -35,6 +35,14 @@ firewall_settings(){
 }
 
 cert(){
+
+    IFS='.' read -ra ADDR <<< "$domain"
+    domain_length=${#ADDR[@]}
+    zone=${ADDR[domain_length-2]}.${ADDR[domain_length-1]}
+    unset ADDR[domain_length-1]
+    unset ADDR[domain_length-2]
+    subdomain=$(IFS=. ; echo "${ADDR[*]}")
+    
     real_addr=`ping ${domain} -c 1 | sed '1{s/[^(]*(//;s/).*//;q}'`
     local_addr=`curl ipv4.icanhazip.com`
     if [ "$mode" == "UC" ] || [ $real_addr == $local_addr ]; then
@@ -110,7 +118,8 @@ EOL
     # Portainer
     # SubConverter
     # downloader
-    # V2Ray
+    # ddns
+    # V2Fly
     # HatH
     if [ "$portainer" != "NULL" ];then
         # Portainer
@@ -271,6 +280,20 @@ EOF
 
     fi
 
+    if [ "$ddns" != "NULL" ];then
+    
+        #ddns
+        docker pull oznu/cloudflare-ddns
+        docker run -d \
+        --name=CloudflareDDNS \
+        --restart=always \
+        -e API_KEY=$ddns \
+        -e ZONE=$zone \
+        -e SUBDOMAIN=$subdomain \
+        oznu/cloudflare-ddns
+
+    fi
+
     if [ "$v2fly" != "NULL" ];then
         #V2fly
         docker pull v2fly/v2fly-core:latest
@@ -339,7 +362,7 @@ EOF
         #HatH
         docker pull ghcr.io/disappear9/hentaiathome:latest
         docker run -d \
-        --name HatH \
+        --name=HatH \
         --restart=always \
         -p $hath_port:$hath_port \
         -v /usr/HatH:/hath/data \
@@ -503,6 +526,9 @@ EOF
 domain="NULL"
 mode="NULL"
 
+zone="NULL"
+subdomain="NULL"
+
 nodes="NULL"
 keypair="NULL"
 rules="NULL"
@@ -534,8 +560,10 @@ portainer="NULL"
 portainer_port="NULL"
 portainer_passwd="NULL"
 
+ddns="NULL"
+
 if [ $# -ne 0 ];then
-    TEMP=`getopt -o "" -l mode:,domain:,ssh:,ports:,v2fly:,hath:,portainer:,openai:,nodes:,keypair:,rules:,airport:, -- "$@"`
+    TEMP=`getopt -o "" -l mode:,domain:,ssh:,ports:,v2fly:,hath:,portainer:,openai:,nodes:,keypair:,rules:,airport:,ddns:, -- "$@"`
     eval set -- $TEMP
     while true ; do
             case "$1" in
@@ -574,6 +602,9 @@ if [ $# -ne 0 ];then
                         shift 2;;
                     --airport) 
                         airport=$2;
+                        shift 2;;
+                    --ddns) 
+                        ddns=$2;
                         shift 2;;
                     --) 
                         shift ; 
@@ -677,6 +708,24 @@ elif [ "$mode" == "UC" ];then
     fi
     cert
     if [ "$?" != "1" ];then
+
+        container_name="CloudflareDDNS"
+        if [ "$(docker ps -a -q -f name=$container_name)" ]; then
+        
+            ddns=$(docker exec $container_name env | grep API_KEY | cut -d'=' -f2)
+            docker stop $container_name && docker rm $container_name
+
+            docker pull oznu/cloudflare-ddns
+            docker run -d \
+            --name=$container_name \
+            --restart=always \
+            -e API_KEY=$ddns \
+            -e ZONE=$zone \
+            -e SUBDOMAIN=$subdomain \
+            oznu/cloudflare-ddns
+
+        fi
+
         systemctl restart docker
         green "=================================================="
         yteal " " "SSL Certificate has been successfully Updated."
