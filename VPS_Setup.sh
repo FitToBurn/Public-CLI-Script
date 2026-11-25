@@ -1,3 +1,7 @@
+#Todo
+# V2FLY的协议没有更新hysteria2
+# 手动改了VPS节点服务器的V2Fly hysteria2的配置
+
 #!/bin/bash
 green(){
     echo -e "\033[32m\033[01m$1\033[0m"
@@ -503,7 +507,7 @@ EOF
         arr=(`echo $airport | tr ';' ' '`)
         cat > /var/lib/docker/volumes/downloader/airport.json << EOF
     {
-        "airport":["${arr[0]}"]
+        "airport":["${arr[0]}","${arr[1]}"]
     }
 EOF
 
